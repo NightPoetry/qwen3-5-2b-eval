@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Qwen3.5 2B 能力测试报告</title>
+<style>
+:root {
+  --blue:    #2563eb;
+  --blue-l:  #dbeafe;
+  --green:   #16a34a;
+  --green-l: #dcfce7;
+  --red:     #dc2626;
+  --red-l:   #fee2e2;
+  --amber:   #d97706;
+  --amber-l: #fef3c7;
+  --purple:  #7c3aed;
+  --purple-l:#ede9fe;
+  --gray:    #6b7280;
+  --gray-l:  #f3f4f6;
+  --dark:    #111827;
+  --text:    #1f2937;
+  --border:  #e5e7eb;
+  --card-bg: #ffffff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', sans-serif; background: #f8fafc; color: var(--text); line-height: 1.6; }
+
+/* ── Hero ── */
+.hero { background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #1e3a5f 100%); color: white; padding: 60px 40px 50px; text-align: center; position: relative; overflow: hidden; }
+.hero::before { content:''; position:absolute; inset:0; background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
+.hero-badge { display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); border-radius:20px; padding:6px 16px; font-size:13px; margin-bottom:20px; }
+.hero-badge span { color:#93c5fd; }
+.hero h1 { font-size: clamp(28px,5vw,48px); font-weight:800; letter-spacing:-1px; margin-bottom:12px; }
+.hero h1 em { font-style:normal; color:#93c5fd; }
+.hero p { font-size:17px; color:#cbd5e1; max-width:640px; margin:0 auto 30px; }
+.hero-stats { display:flex; justify-content:center; gap:40px; flex-wrap:wrap; }
+.hero-stat { text-align:center; }
+.hero-stat .num { font-size:36px; font-weight:800; color:#60a5fa; }
+.hero-stat .lbl { font-size:12px; color:#94a3b8; text-transform:uppercase; letter-spacing:1px; }
+
+/* ── Config bar ── */
+.config-bar { background:#1e293b; color:#94a3b8; padding:12px 40px; display:flex; gap:30px; flex-wrap:wrap; font-size:13px; }
+.config-bar strong { color:#e2e8f0; }
+
+/* ── Key finding ── */
+.key-finding { background: linear-gradient(135deg, #1d4ed8, #7c3aed); color:white; margin:30px auto; max-width:900px; border-radius:16px; padding:24px 32px; display:flex; align-items:center; gap:20px; }
+.key-finding h2 { font-size:20px; font-weight:700; margin-bottom:6px; }
+.key-finding p { font-size:14px; color:rgba(255,255,255,0.85); }
+
+/* ── Layout ── */
+.container { max-width:1100px; margin:0 auto; padding:0 24px 60px; }
+.section { margin-top:48px; }
+.section-title { font-size:22px; font-weight:700; color:var(--dark); margin-bottom:20px; display:flex; align-items:center; gap:10px; }
+.section-title .badge { background:var(--blue); color:white; border-radius:6px; padding:2px 10px; font-size:13px; font-weight:600; }
+.card { background:var(--card-bg); border:1px solid var(--border); border-radius:12px; padding:24px; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
+
+/* ── Result grid ── */
+.result-grid { display:grid; gap:10px; }
+.result-row { display:flex; align-items:center; gap:12px; padding:10px 16px; border-radius:8px; background:var(--gray-l); }
+.result-row.pass { background:var(--green-l); border-left:4px solid var(--green); }
+.result-row.fail { background:var(--red-l); border-left:4px solid var(--red); }
+.result-row .badge-pos { font-size:12px; font-weight:700; color:var(--gray); min-width:40px; }
+.result-row .badge-pass { font-size:13px; font-weight:700; }
+.result-row.pass .badge-pass { color:var(--green); }
+.result-row.fail .badge-pass { color:var(--red); }
+.result-row .answer { font-family:monospace; font-size:13px; color:var(--dark); }
+.result-row .note { font-size:12px; color:var(--gray); margin-left:auto; font-style:italic; }
+
+/* ── Compare table ── */
+.compare-table { width:100%; border-collapse:collapse; font-size:14px; }
+.compare-table th { background:#f1f5f9; padding:10px 14px; text-align:left; font-weight:600; border-bottom:2px solid var(--border); }
+.compare-table td { padding:10px 14px; border-bottom:1px solid var(--border); vertical-align:top; }
+.compare-table tr:last-child td { border-bottom:none; }
+.tag-pass { background:var(--green-l); color:var(--green); padding:2px 8px; border-radius:4px; font-size:12px; font-weight:700; }
+.tag-fail { background:var(--red-l); color:var(--red); padding:2px 8px; border-radius:4px; font-size:12px; font-weight:700; }
+.tag-note { background:var(--amber-l); color:var(--amber); padding:2px 8px; border-radius:4px; font-size:11px; }
+.think-bar { display:inline-block; height:6px; background:#2563eb; border-radius:3px; vertical-align:middle; margin-right:6px; }
+
+/* ── Score big ── */
+.score-big { display:flex; align-items:center; gap:20px; flex-wrap:wrap; }
+.score-circle { width:80px; height:80px; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; font-weight:800; }
+.score-circle.perfect { background:var(--green-l); color:var(--green); border:3px solid var(--green); }
+.score-circle.good    { background:var(--blue-l);  color:var(--blue);  border:3px solid var(--blue); }
+.score-circle.bad     { background:var(--red-l);   color:var(--red);   border:3px solid var(--red); }
+.score-circle .num  { font-size:22px; line-height:1; }
+.score-circle .denom { font-size:12px; color:inherit; opacity:.7; }
+.score-desc { font-size:14px; color:var(--gray); }
+.score-desc strong { color:var(--dark); }
+
+/* ── 7/7 grid ── */
+.seven-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px; margin-top:16px; }
+.seven-card { border-radius:10px; padding:14px; display:flex; gap:10px; align-items:flex-start; }
+.seven-card.pass { background:var(--green-l); border:1px solid #bbf7d0; }
+.seven-card .check { font-size:20px; flex-shrink:0; }
+.seven-card .name { font-size:13px; font-weight:600; color:var(--dark); }
+.seven-card .detail { font-size:12px; color:var(--gray); margin-top:2px; font-family:monospace; }
+
+/* ── Example output boxes ── */
+.examples { display:flex; flex-direction:column; gap:32px; margin-top:20px; }
+.example { border-radius:12px; overflow:hidden; border:1px solid var(--border); }
+.example-header { background:#f8fafc; padding:12px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.example-header .q-text { font-size:14px; font-weight:600; color:var(--dark); }
+.example-header .type-tag { font-size:11px; background:var(--purple-l); color:var(--purple); padding:2px 8px; border-radius:4px; font-weight:600; white-space:nowrap; }
+.example-panels { display:grid; grid-template-columns:1fr 1fr; }
+.example-panel { padding:20px; }
+.example-panel.weak { border-right:1px solid var(--border); background:#fffbeb; }
+.example-panel.strong { background:#f0fdf4; }
+.example-panel.en-q  { background:#eff6ff; border-right:1px solid var(--border); }
+.example-panel.cn-q  { background:#fdf4ff; }
+.example-panel-title { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; margin-bottom:12px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.action-badge { font-size:11px; padding:2px 8px; border-radius:4px; }
+.action-badge.skipped { background:#fef3c7; color:#92400e; }
+.action-badge.called  { background:#dcfce7; color:#166534; }
+.output-box { background:white; border-radius:8px; padding:14px; font-size:13px; line-height:1.6; border:1px solid var(--border); font-family:monospace; white-space:pre-wrap; word-break:break-all; }
+.output-box.called-fn { border-color:#16a34a; background:#f0fdf4; color:#166534; font-weight:600; }
+.verdict { font-size:12px; margin-top:8px; font-weight:600; }
+.verdict.bad  { color:#dc2626; }
+.verdict.good { color:#16a34a; }
+
+/* ── Condition table (Exp4) ── */
+.cond-table { width:100%; border-collapse:collapse; font-size:13px; }
+.cond-table th { background:#f1f5f9; padding:8px 10px; text-align:center; font-weight:600; border-bottom:2px solid var(--border); font-size:11px; white-space:nowrap; }
+.cond-table th:first-child { text-align:left; }
+.cond-table td { padding:8px 10px; border-bottom:1px solid #f1f5f9; text-align:center; }
+.cond-table td:first-child { text-align:left; font-weight:600; font-size:12px; }
+.cond-table .best-row td { background:#eff6ff; }
+.cond-table .sep-row td { background:#f8fafc; font-size:11px; font-weight:700; color:#6b7280; text-transform:uppercase; letter-spacing:.5px; padding:6px 10px; }
+.pct { display:inline-block; padding:2px 8px; border-radius:4px; font-weight:700; font-size:12px; }
+.pct.h  { background:#dcfce7; color:#15803d; }
+.pct.m  { background:#fef3c7; color:#92400e; }
+.pct.l  { background:#fee2e2; color:#991b1b; }
+.pct.vl { background:#f1f5f9; color:#64748b; }
+
+/* ── Chart legend ── */
+.chart-legend { display:flex; gap:16px; flex-wrap:wrap; margin:12px 0 8px; font-size:12px; }
+.legend-item { display:flex; align-items:center; gap:5px; }
+.legend-dot { width:10px; height:10px; border-radius:2px; flex-shrink:0; }
+
+/* ── Improvement delta bars ── */
+.delta-group { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:12px; }
+.delta-card { border-radius:8px; padding:14px; background:#f8fafc; border:1px solid var(--border); }
+.delta-title { font-size:12px; font-weight:700; color:var(--dark); margin-bottom:10px; }
+.delta-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; font-size:12px; }
+.delta-label { min-width:80px; color:var(--gray); }
+.delta-track { flex:1; background:#e5e7eb; border-radius:4px; height:16px; position:relative; overflow:hidden; }
+.delta-fill { height:100%; border-radius:4px; display:flex; align-items:center; padding-left:6px; font-size:10px; font-weight:700; color:white; }
+.delta-val { font-size:12px; font-weight:700; min-width:36px; text-align:right; }
+.delta-plus { color:#15803d; font-weight:800; font-size:13px; }
+
+/* ── 4 desc boxes ── */
+.four-desc { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.desc-card { border-radius:8px; padding:14px; border:1px solid var(--border); }
+.desc-card.ew { background:#f8fafc; border-color:#cbd5e1; }
+.desc-card.es { background:#fffbeb; border-color:#fde68a; }
+.desc-card.cw { background:#fdf4ff; border-color:#e9d5ff; }
+.desc-card.cs { background:#f0fdf4; border-color:#86efac; }
+.desc-card-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.desc-text-box { font-size:12px; line-height:1.6; font-family:monospace; background:white; border-radius:6px; padding:10px; border:1px solid var(--border); }
+.desc-rate { font-size:11px; font-weight:600; margin-top:6px; }
+.desc-rate.good { color:#15803d; }
+.desc-rate.bad  { color:#991b1b; }
+
+/* ── Stat highlight cards ── */
+.stat-cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; margin-bottom:16px; }
+.stat-card { border-radius:10px; padding:16px 20px; }
+.stat-card.best { background:linear-gradient(135deg,#dbeafe,#ede9fe); border:1px solid #93c5fd; }
+.stat-card.gain { background:linear-gradient(135deg,#dcfce7,#d1fae5); border:1px solid #6ee7b7; }
+.stat-card.warn { background:linear-gradient(135deg,#fef3c7,#fde68a44); border:1px solid #fcd34d; }
+.stat-card.info { background:linear-gradient(135deg,#f0f9ff,#e0f2fe); border:1px solid #7dd3fc; }
+.stat-card .stat-num { font-size:30px; font-weight:900; margin-bottom:4px; }
+.stat-card.best .stat-num { color:#1d4ed8; }
+.stat-card.gain .stat-num { color:#15803d; }
+.stat-card.warn .stat-num { color:#b45309; }
+.stat-card.info .stat-num { color:#0369a1; }
+.stat-card .stat-desc { font-size:12px; color:#374151; line-height:1.4; }
+
+/* ── Conclusions ── */
+.conclusions { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:16px; margin-top:20px; }
+.conclusion-card { border-radius:12px; padding:20px; }
+.conclusion-card.rule1 { background:linear-gradient(135deg,#eff6ff,#dbeafe); border:1px solid #bfdbfe; }
+.conclusion-card.rule2 { background:linear-gradient(135deg,#f0fdf4,#dcfce7); border:1px solid #bbf7d0; }
+.conclusion-card.rule3 { background:linear-gradient(135deg,#fdf4ff,#f3e8ff); border:1px solid #d8b4fe; }
+.conclusion-card.rule4 { background:linear-gradient(135deg,#fff7ed,#ffedd5); border:1px solid #fed7aa; }
+.conclusion-card .num { font-size:32px; font-weight:900; margin-bottom:8px; }
+.conclusion-card.rule1 .num { color:#1d4ed8; }
+.conclusion-card.rule2 .num { color:#15803d; }
+.conclusion-card.rule3 .num { color:#7c3aed; }
+.conclusion-card.rule4 .num { color:#c2410c; }
+.conclusion-card h3 { font-size:15px; font-weight:700; color:var(--dark); margin-bottom:6px; }
+.conclusion-card p { font-size:13px; color:var(--gray); line-height:1.5; }
+.conclusion-card code { background:rgba(0,0,0,0.06); padding:1px 5px; border-radius:3px; font-size:12px; }
+
+/* ── Footer ── */
+.footer { background:#0f172a; color:#64748b; padding:30px 40px; font-size:13px; }
+
+/* ── TOC ── */
+nav.toc { background:white; border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; padding:0 24px; display:flex; gap:0; overflow-x:auto; }
+nav.toc a { display:block; padding:14px 16px; font-size:13px; font-weight:600; color:var(--gray); text-decoration:none; border-bottom:3px solid transparent; white-space:nowrap; }
+nav.toc a:hover { color:var(--blue); }
+nav.toc a.active { color:var(--blue); border-bottom-color:var(--blue); }
+
+/* ── Responsive ── */
+@media(max-width:640px) {
+  .example-panels { grid-template-columns:1fr; }
+  .example-panel.weak,.example-panel.en-q { border-right:none; border-bottom:1px solid var(--border); }
+  .four-desc { grid-template-columns:1fr; }
+  .delta-group { grid-template-columns:1fr; }
+  .hero-stats { gap:20px; }
+  .config-bar { padding:12px 16px; }
+  .chart-pair { grid-template-columns:1fr; }
+}
+
+/* ── Animation ── */
+@keyframes fadeIn { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+.section { animation:fadeIn .5s ease both; }
+
+/* ── Chart containers ── */
+.chart-pair { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+.chart-panel { background:#f8fafc; border-radius:10px; padding:16px; border:1px solid var(--border); }
+.chart-panel-title { font-size:13px; font-weight:700; color:var(--dark); margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-badge">
+    <span style="display:flex;align-items:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#93c5fd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8V5"/><circle cx="12" cy="4" r="1"/><line x1="8" y1="13" x2="8.01" y2="13"/><line x1="16" y1="13" x2="16.01" y2="13"/><path d="M9 17h6"/></svg></span>
+    <span>Qwen3.5 2B · LM Studio 0.4.12 Build1 · Temperature 0.1</span>
+  </div>
+  <h1>Qwen3.5 2B<br><em>工具调用能力测试报告</em></h1>
+  <p>长上下文理解 · 推理链效果 · Function Calling · 中英文工具描述对比</p>
+  <div class="hero-stats">
+    <div class="hero-stat"><div class="num">4</div><div class="lbl">实验</div></div>
+    <div class="hero-stat"><div class="num">100</div><div class="lbl">测试题</div></div>
+    <div class="hero-stat"><div class="num">8</div><div class="lbl">测试条件</div></div>
+    <div class="hero-stat"><div class="num">88%</div><div class="lbl">中文描述最优触发率</div></div>
+  </div>
+</div>
+
+<!-- Config bar -->
+<div class="config-bar">
+  <span><strong>模型 Model：</strong>qwen3.5-2b</span>
+  <span><strong>服务器 Server：</strong>192.168.3.181:1234</span>
+  <span><strong>温度 Temperature：</strong>0.1</span>
+  <span><strong>工具调用 Tool Choice：</strong>tool_choice=auto</span>
+  <span><strong>API 格式：</strong>OpenAI-compatible via LM Studio</span>
+  <span><strong>测试日期 Date：</strong>2026-05-16</span>
+</div>
+
+<!-- TOC -->
+<nav class="toc">
+  <a href="#exp1">实验一：大海捞针</a>
+  <a href="#exp2">实验二：推理检索</a>
+  <a href="#exp3">实验三：高级测试</a>
+  <a href="#exp4">实验四：工具描述对比</a>
+  <a href="#conclusion">结论与建议</a>
+</nav>
+
+<div class="container">
+
+  <!-- Key finding -->
+  <div class="key-finding" style="margin-top:32px;">
+    <div style="flex-shrink:0"><svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.95)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21h6"/><path d="M12 3a6 6 0 0 1 6 6c0 2.22-1.2 4.16-3 5.2V17H9v-2.8C7.2 13.16 6 11.22 6 9a6 6 0 0 1 6-6z"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+    <div>
+      <h2>核心发现：同等强度下，中文工具描述远优于英文（100题大样本验证）</h2>
+      <p>英文问题 + 中文强制描述（EN-Q + CN-STRONG）= <strong>88%</strong>，vs 英文问题 + 英文强制描述（EN-Q + EN-STRONG）= 仅 <strong>47%</strong>，提升 <strong>+41%</strong>。<br>
+      开启 Step-by-Step 推理链（Chain-of-Thought）后，长上下文推理准确率从 40% 跃升至 100%。</p>
+    </div>
+  </div>
+
+  <!-- ═══ EXP 1 ═══ -->
+  <div class="section" id="exp1">
+    <div class="section-title">
+      <span class="badge">实验一</span>
+      大海捞针 — 长上下文词汇检索
+    </div>
+    <div class="card">
+      <div class="score-big" style="margin-bottom:20px;">
+        <div class="score-circle perfect"><span class="num">5</span><span class="denom">/5</span></div>
+        <div class="score-desc">
+          <strong>100% 全部通过</strong><br>
+          在约 2000 词的填充文本中，将隐藏词 <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">BLUEBERRY</code> 放在不同位置，模型均能准确找回。<br>
+          测试位置：10% · 25% · 50% · 75% · 90%
+        </div>
+      </div>
+      <div class="result-grid">
+        <div class="result-row pass"><span class="badge-pos">10%</span><span class="badge-pass">PASS（通过）</span><span class="answer">→ "BLUEBERRY"</span><span class="note">开头附近</span></div>
+        <div class="result-row pass"><span class="badge-pos">25%</span><span class="badge-pass">PASS（通过）</span><span class="answer">→ "BLUEBERRY"</span><span class="note">前段</span></div>
+        <div class="result-row pass"><span class="badge-pos">50%</span><span class="badge-pass">PASS（通过）</span><span class="answer">→ "BLUEBERRY"</span><span class="note">正中间</span></div>
+        <div class="result-row pass"><span class="badge-pos">75%</span><span class="badge-pass">PASS（通过）</span><span class="answer">→ "BLUEBERRY"</span><span class="note">后段</span></div>
+        <div class="result-row pass"><span class="badge-pos">90%</span><span class="badge-pass">PASS（通过）</span><span class="answer">→ "BLUEBERRY"</span><span class="note">结尾附近</span></div>
+      </div>
+      <p style="margin-top:16px;font-size:13px;color:#6b7280;">
+        <strong>配置：</strong>使用 <code>/no_think</code> 前缀关闭推理链（thinking disabled），max_tokens=50，context（上下文）≈2005词。
+        发现 Python <code>urllib</code> 的 <code>Expect: 100-continue</code> 请求头会导致 LM Studio 返回 502 Bad Gateway，改用 <code>requests</code> 库解决。
+      </p>
+    </div>
+  </div>
+
+  <!-- ═══ EXP 2 ═══ -->
+  <div class="section" id="exp2">
+    <div class="section-title">
+      <span class="badge">实验二</span>
+      长上下文推理检索 — 规则嵌入式问答
+    </div>
+    <div class="card">
+      <p style="font-size:14px;color:var(--gray);margin-bottom:20px;">
+        不直接标注答案，而是在文中定义一个规则（如"文中唯一质数"），模型需推理出哪个词满足条件。规则与答案词分布在 ~2000 词文本的不同位置。
+      </p>
+      <div class="score-big" style="margin-bottom:24px;gap:32px;">
+        <div>
+          <div class="score-circle bad"><span class="num">2</span><span class="denom">/5</span></div>
+          <div style="font-size:12px;color:#6b7280;text-align:center;margin-top:6px;">无推理链<br>No Thinking<br>40%</div>
+        </div>
+        <div style="font-size:28px;color:#d1d5db;">→</div>
+        <div>
+          <div class="score-circle perfect"><span class="num">5</span><span class="denom">/5</span></div>
+          <div style="font-size:12px;color:#6b7280;text-align:center;margin-top:6px;">开启推理链<br>With Thinking<br>100%</div>
+        </div>
+        <div class="score-desc">
+          <strong>推理链使准确率提升 +60%</strong><br>
+          Qwen3.5 2B 的推理内联在 <code>content</code> 字段中<br>（非独立 <code>reasoning_content</code>），<br>本质是 in-context chain-of-thought（上下文内链式推理），<br>非原生 thinking token。
+        </div>
+      </div>
+
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>测试</th>
+            <th>规则位置<br><small>Rule Position</small></th>
+            <th>答案位置<br><small>Target Position</small></th>
+            <th>无推理链<br><small>No Thinking</small></th>
+            <th>开推理链<br><small>With Thinking</small></th>
+            <th>推理链长度<br><small>Chain Length</small></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>唯一质数</strong><br><small style="color:#6b7280">15, 23, 40, 18 中找质数</small></td>
+            <td>15%</td><td>75%</td>
+            <td><span class="tag-fail">失败 ✗</span><br><span class="tag-note">幻觉（Hallucination）"13"不在文中</span></td>
+            <td><span class="tag-pass">通过 ✓ 23</span></td>
+            <td><div class="think-bar" style="width:70px;"></div>1453 字符</td>
+          </tr>
+          <tr>
+            <td><strong>唯一南美洲国家</strong><br><small style="color:#6b7280">德国/巴西/日本/加拿大中找</small></td>
+            <td>80%</td><td>20%</td>
+            <td><span class="tag-pass">通过 ✓ Brazil</span></td>
+            <td><span class="tag-pass">通过 ✓ Brazil</span></td>
+            <td><div class="think-bar" style="width:68px;"></div>1430 字符</td>
+          </tr>
+          <tr>
+            <td><strong>唯一哺乳动物</strong><br><small style="color:#6b7280">鹰/鲑鱼/刺猬/龟/蛙中找</small></td>
+            <td>40%</td><td>60%</td>
+            <td><span class="tag-fail">失败 ✗</span><br><span class="tag-note">误认"金鹰（eagle）"为哺乳动物</span></td>
+            <td><span class="tag-pass">通过 ✓ hedgehog（刺猬）</span></td>
+            <td><div class="think-bar" style="width:57px;"></div>1200 字符</td>
+          </tr>
+          <tr>
+            <td><strong>唯一奇数</strong><br><small style="color:#6b7280">84, 37, 120, 56, 200 中找</small></td>
+            <td>10%</td><td>90%</td>
+            <td><span class="tag-fail">失败 ✗</span><br><span class="tag-note">答"200"（偶数 even number！）</span></td>
+            <td><span class="tag-pass">通过 ✓ 37</span></td>
+            <td><div class="think-bar" style="width:40px;"></div>844 字符</td>
+          </tr>
+          <tr>
+            <td><strong>唯一行星名</strong><br><small style="color:#6b7280">珠峰/土星/撒哈拉/亚马逊/乞力马扎罗中找</small></td>
+            <td>50%</td><td>51%</td>
+            <td><span class="tag-pass">通过 ✓ Saturn（土星）</span></td>
+            <td><span class="tag-pass">通过 ✓ Saturn（土星）</span></td>
+            <td><div class="think-bar" style="width:130px;"></div>6833 字符</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ EXP 3 ═══ -->
+  <div class="section" id="exp3">
+    <div class="section-title">
+      <span class="badge">实验三</span>
+      高级测试 — 复杂推理 + Function Calling 完整闭环
+    </div>
+    <div class="card">
+      <div class="score-big" style="margin-bottom:20px;">
+        <div class="score-circle perfect"><span class="num">7</span><span class="denom">/7</span></div>
+        <div class="score-desc"><strong>100% 全部通过</strong><br>多跳推理、干扰陷阱、嵌套规则、矛盾覆盖，以及 Function Calling 完整闭环</div>
+      </div>
+      <div class="seven-grid">
+        <div class="seven-card pass">
+          <span class="check"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+          <div><div class="name">A. 多跳推理</div><div class="detail">找到"Indian Ocean"→查 RULE-2 表→答案 87</div></div>
+        </div>
+        <div class="seven-card pass">
+          <span class="check"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+          <div><div class="name">B. 干扰陷阱</div><div class="detail">35 vs 49，逐一验证三个条件→答案 49</div></div>
+        </div>
+        <div class="seven-card pass">
+          <span class="check"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+          <div><div class="name">C. 嵌套规则</div><div class="detail">META-RULE 忽略 RULE ALPHA，执行 RULE BETA→最小数 310</div></div>
+        </div>
+        <div class="seven-card pass">
+          <span class="check"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+          <div><div class="name">D. 矛盾覆盖</div><div class="detail">代号更新链：FALCON→PHOENIX→AURORA，取最终值</div></div>
+        </div>
+        <div class="seven-card pass">
+          <span class="check"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+          <div><div class="name">F1. 单参数提取</div><div class="detail">调用 compute_square(n=17)</div></div>
+        </div>
+        <div class="seven-card pass">
+          <span class="check"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+          <div><div class="name">F2. 多参数提取</div><div class="detail">调用 register_result("Elena Vasquez", score=94)</div></div>
+        </div>
+        <div class="seven-card pass">
+          <span class="check"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+          <div><div class="name">F3. 函数选择</div><div class="detail">三工具中选 translate_document：法语→英语</div></div>
+        </div>
+      </div>
+
+      <div style="margin-top:24px;padding:16px;background:#f8fafc;border-radius:8px;border:1px solid var(--border);">
+        <div style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:8px;">Function Calling 完整闭环流程（Parallel Tool Calls，并行工具调用）</div>
+        <pre style="font-size:12px;color:#374151;line-height:1.8;overflow-x:auto;">用户（User）："飞往东京，天气如何？500美元能换多少日元？"
+  │
+  ▼ Round 1（第1轮）— 模型同时发出 2 个工具调用（Parallel Tool Calls）
+  ├─ get_weather("Tokyo")        → {"temp":"16°C","condition":"rainy","humidity":"88%"}
+  └─ get_exchange_rate(USD→JPY)  → {"rate":152.3}
+  │
+  ▼ Round 2（第2轮）— 模型综合工具结果（Tool Results）
+  ├─ 计算：500 × 152.3 = 76,150 JPY ✓
+  ├─ 判断：大雨 → 建议带伞 ✓
+  └─ 生成最终回答（Final Answer，共 2 轮完成）</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ EXP 4 ═══ -->
+  <div class="section" id="exp4">
+    <div class="section-title">
+      <span class="badge">实验四</span>
+      工具描述质量对比 — 100题 × 8种条件
+      <span style="font-size:13px;font-weight:400;color:var(--gray);">（2种问题语言 × 4种描述风格）</span>
+    </div>
+
+    <!-- Highlight stat cards -->
+    <div class="stat-cards">
+      <div class="stat-card best">
+        <div class="stat-num">88%</div>
+        <div class="stat-desc"><strong>EN-Q + CN-STRONG</strong><br>最优组合：英文问题 + 中文强制描述<br>A类达 96%，B类达 96%</div>
+      </div>
+      <div class="stat-card gain">
+        <div class="stat-num">+41%</div>
+        <div class="stat-desc"><strong>CN-STRONG vs EN-STRONG</strong><br>英文问题下，中文描述 vs 英文描述<br>（88% vs 47%）</div>
+      </div>
+      <div class="stat-card warn">
+        <div class="stat-num">8%</div>
+        <div class="stat-desc"><strong>EN-Q + EN-WEAK 最差</strong><br>弱英文描述几乎无效<br>C/D类完全失败（0%）</div>
+      </div>
+      <div class="stat-card info">
+        <div class="stat-num">C类</div>
+        <div class="stat-desc"><strong>多步文字题最难触发</strong><br>最优条件下仅 72%（EN-Q）<br>对模型挑战最大的题型</div>
+      </div>
+    </div>
+
+    <!-- 8-condition overview table -->
+    <div class="card" style="margin-bottom:16px;">
+      <div style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:12px;">8种条件全结果对比 — 100题，每题类型 25题</div>
+      <div style="overflow-x:auto;">
+        <table class="cond-table">
+          <thead>
+            <tr>
+              <th>条件 Condition</th>
+              <th>问题语言<br>Q Lang</th>
+              <th>描述语言<br>Desc Lang</th>
+              <th>全部<br>All</th>
+              <th>A类<br>直接算式</th>
+              <th>B类<br>一步文字</th>
+              <th>C类<br>多步文字</th>
+              <th>D类<br>公式应用</th>
+            </tr>
+          </thead>
+          <tbody id="cond-table-body">
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top:12px;font-size:11px;color:var(--gray);display:flex;gap:16px;flex-wrap:wrap;">
+        <span><span class="pct h" style="font-size:10px;">高 ≥70%</span></span>
+        <span><span class="pct m" style="font-size:10px;">中 40–69%</span></span>
+        <span><span class="pct l" style="font-size:10px;">低 15–39%</span></span>
+        <span><span class="pct vl" style="font-size:10px;">极低 &lt;15%</span></span>
+      </div>
+    </div>
+
+    <!-- Main paired vertical bar charts -->
+    <div class="card" style="margin-bottom:16px;">
+      <div style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:4px;">按题目类型分组的竖向柱状图 — 英文问题 vs 中文问题对比</div>
+      <div style="font-size:12px;color:var(--gray);margin-bottom:12px;">左图 = 英文问题（EN-Q），右图 = 中文问题（CN-Q）；纵轴为工具触发率（%）</div>
+      <div class="chart-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#94a3b8;"></div><span>EN-WEAK（英文·弱 English vague）</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background:#f59e0b;"></div><span>EN-STRONG（英文·强 English mandatory）</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background:#a78bfa;"></div><span>CN-WEAK（中文·弱 Chinese vague）</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background:#3b82f6;"></div><span>CN-STRONG（中文·强 Chinese mandatory）</span></div>
+      </div>
+      <div class="chart-pair">
+        <div class="chart-panel">
+          <div class="chart-panel-title">
+            <svg width="22" height="14" viewBox="0 0 24 16" xmlns="http://www.w3.org/2000/svg" style="border-radius:2px;flex-shrink:0"><rect width="24" height="16" fill="#B22234"/><rect y="1.23" width="24" height="1.23" fill="white"/><rect y="3.69" width="24" height="1.23" fill="white"/><rect y="6.15" width="24" height="1.23" fill="white"/><rect y="8.62" width="24" height="1.23" fill="white"/><rect y="11.08" width="24" height="1.23" fill="white"/><rect y="13.54" width="24" height="1.23" fill="white"/><rect width="9.6" height="8.62" fill="#3C3B6E"/><circle cx="1.6" cy="1.1" r="0.6" fill="white"/><circle cx="3.2" cy="1.1" r="0.6" fill="white"/><circle cx="4.8" cy="1.1" r="0.6" fill="white"/><circle cx="6.4" cy="1.1" r="0.6" fill="white"/><circle cx="8.0" cy="1.1" r="0.6" fill="white"/><circle cx="1.6" cy="2.9" r="0.6" fill="white"/><circle cx="3.2" cy="2.9" r="0.6" fill="white"/><circle cx="4.8" cy="2.9" r="0.6" fill="white"/><circle cx="6.4" cy="2.9" r="0.6" fill="white"/><circle cx="8.0" cy="2.9" r="0.6" fill="white"/><circle cx="1.6" cy="4.7" r="0.6" fill="white"/><circle cx="3.2" cy="4.7" r="0.6" fill="white"/><circle cx="4.8" cy="4.7" r="0.6" fill="white"/><circle cx="6.4" cy="4.7" r="0.6" fill="white"/><circle cx="8.0" cy="4.7" r="0.6" fill="white"/><circle cx="1.6" cy="6.5" r="0.6" fill="white"/><circle cx="3.2" cy="6.5" r="0.6" fill="white"/><circle cx="4.8" cy="6.5" r="0.6" fill="white"/><circle cx="6.4" cy="6.5" r="0.6" fill="white"/><circle cx="8.0" cy="6.5" r="0.6" fill="white"/></svg>
+            英文问题 EN-Q — 4种描述风格
+          </div>
+          <div id="chart-enq"></div>
+        </div>
+        <div class="chart-panel">
+          <div class="chart-panel-title">
+            <svg width="22" height="14" viewBox="0 0 24 16" xmlns="http://www.w3.org/2000/svg" style="border-radius:2px;flex-shrink:0"><rect width="24" height="16" fill="#DE2910"/><polygon points="4,1.5 4.9,4.3 7.8,4.3 5.5,6 6.4,8.8 4,7.1 1.6,8.8 2.5,6 0.2,4.3 3.1,4.3" fill="#FFDE00"/><polygon points="0,0 0.5,1.5 2,1.5 0.8,2.4 1.3,3.9 0,3 -1.3,3.9 -0.8,2.4 -2,1.5 -0.5,1.5" fill="#FFDE00" transform="translate(10.5,1.2) scale(0.7)"/><polygon points="0,0 0.5,1.5 2,1.5 0.8,2.4 1.3,3.9 0,3 -1.3,3.9 -0.8,2.4 -2,1.5 -0.5,1.5" fill="#FFDE00" transform="translate(12.5,3.5) scale(0.7)"/><polygon points="0,0 0.5,1.5 2,1.5 0.8,2.4 1.3,3.9 0,3 -1.3,3.9 -0.8,2.4 -2,1.5 -0.5,1.5" fill="#FFDE00" transform="translate(12.5,6.5) scale(0.7)"/><polygon points="0,0 0.5,1.5 2,1.5 0.8,2.4 1.3,3.9 0,3 -1.3,3.9 -0.8,2.4 -2,1.5 -0.5,1.5" fill="#FFDE00" transform="translate(10.5,8.8) scale(0.7)"/></svg>
+            中文问题 CN-Q — 4种描述风格
+          </div>
+          <div id="chart-cnq"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EN→CN improvement analysis (3 comparison charts) -->
+    <div class="card" style="margin-bottom:16px;">
+      <div style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:4px;">描述语言提升效果 — 英文描述 vs 中文描述（同等强度对比）</div>
+      <div style="font-size:12px;color:var(--gray);margin-bottom:12px;">相同强度的描述，从英文换为中文后的触发率变化</div>
+      <div id="improvement-charts"></div>
+    </div>
+
+    <!-- 4 Tool description boxes -->
+    <div class="card" style="margin-bottom:16px;">
+      <div style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:12px;">4种工具描述原文对比</div>
+      <div class="four-desc">
+        <div class="desc-card ew">
+          <div class="desc-card-title" style="color:#64748b;">
+            <span style="background:#94a3b8;color:white;padding:1px 7px;border-radius:3px;font-size:10px;">EN-WEAK</span>
+            英文·弱描述（English vague）
+          </div>
+          <div class="desc-text-box">"A calculator. Can be used to compute math expressions."</div>
+          <div class="desc-rate bad">触发率 Call Rate：EN-Q 8% · CN-Q 27%</div>
+        </div>
+        <div class="desc-card es">
+          <div class="desc-card-title" style="color:#b45309;">
+            <span style="background:#f59e0b;color:white;padding:1px 7px;border-radius:3px;font-size:10px;">EN-STRONG</span>
+            英文·强描述（English mandatory）
+          </div>
+          <div class="desc-text-box">"REQUIRED: You MUST call this tool for ANY arithmetic computation — multiplication, division, addition, subtraction, powers, or combinations. Do NOT compute numbers yourself; always delegate to this tool. For word problems, derive the expression first, then pass it to this tool."</div>
+          <div class="desc-rate bad">触发率 Call Rate：EN-Q 47% · CN-Q 48%</div>
+        </div>
+        <div class="desc-card cw">
+          <div class="desc-card-title" style="color:#7c3aed;">
+            <span style="background:#a78bfa;color:white;padding:1px 7px;border-radius:3px;font-size:10px;">CN-WEAK</span>
+            中文·弱描述（Chinese vague）
+          </div>
+          <div class="desc-text-box">"一个计算器，可以用来计算数学表达式。"</div>
+          <div class="desc-rate bad">触发率 Call Rate：EN-Q 32% · CN-Q 47%</div>
+        </div>
+        <div class="desc-card cs">
+          <div class="desc-card-title" style="color:#15803d;">
+            <span style="background:#3b82f6;color:white;padding:1px 7px;border-radius:3px;font-size:10px;">CN-STRONG</span>
+            中文·强描述（Chinese mandatory）
+          </div>
+          <div class="desc-text-box">"【必须调用】遇到任何数值计算（加减乘除、乘方、百分比、多步运算）时，必须调用此工具，不得自行心算或推导。触发条件：只要问题涉及具体数字的运算，无论简单还是复杂，都必须使用此工具。禁止在不调用此工具的情况下给出任何计算结果。对于需要先理解题意再列算式的文字题，请先在脑中列出算式，然后将完整算式作为 expression 传入本工具，不得跳过调用直接给答案。"</div>
+          <div class="desc-rate good">触发率 Call Rate：EN-Q 88% · CN-Q 78%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Per-type example questions -->
+    <div class="card">
+      <div style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:4px;">四种题型真实输出示例</div>
+      <div style="font-size:12px;color:var(--gray);margin-bottom:16px;">左栏 = 英文问题（EN-Q），右栏 = 中文问题（CN-Q）；展示 EN-STRONG 和 CN-STRONG 两种描述下的真实行为</div>
+      <div class="examples">
+
+        <!-- Type A example -->
+        <div class="example">
+          <div class="example-header">
+            <span class="type-tag" style="background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;">A 类 · 直接算式 Direct Arithmetic</span>
+            <span class="q-text">A01 — "347 × 29 = ?"</span>
+          </div>
+          <div class="example-panels">
+            <div class="example-panel en-q">
+              <div class="example-panel-title" style="color:#1d4ed8;">
+                <svg width="22" height="14" viewBox="0 0 24 16" xmlns="http://www.w3.org/2000/svg" style="border-radius:2px;flex-shrink:0"><rect width="24" height="16" fill="#B22234"/><rect y="1.23" width="24" height="1.23" fill="white"/><rect y="3.69" width="24" height="1.23" fill="white"/><rect y="6.15" width="24" height="1.23" fill="white"/><rect y="8.62" width="24" height="1.23" fill="white"/><rect y="11.08" width="24" height="1.23" fill="white"/><rect y="13.54" width="24" height="1.23" fill="white"/><rect width="9.6" height="8.62" fill="#3C3B6E"/><circle cx="1.6" cy="1.1" r="0.6" fill="white"/><circle cx="3.2" cy="1.1" r="0.6" fill="white"/><circle cx="4.8" cy="1.1" r="0.6" fill="white"/><circle cx="6.4" cy="1.1" r="0.6" fill="white"/><circle cx="8.0" cy="1.1" r="0.6" fill="white"/><circle cx="1.6" cy="2.9" r="0.6" fill="white"/><circle cx="3.2" cy="2.9" r="0.6" fill="white"/><circle cx="4.8" cy="2.9" r="0.6" fill="white"/><circle cx="6.4" cy="2.9" r="0.6" fill="white"/><circle cx="8.0" cy="2.9" r="0.6" fill="white"/><circle cx="1.6" cy="4.7" r="0.6" fill="white"/><circle cx="3.2" cy="4.7" r="0.6" fill="white"/><circle cx="4.8" cy="4.7" r="0.6" fill="white"/><circle cx="6.4" cy="4.7" r="0.6" fill="white"/><circle cx="8.0" cy="4.7" r="0.6" fill="white"/><circle cx="1.6" cy="6.5" r="0.6" fill="white"/><circle cx="3.2" cy="6.5" r="0.6" fill="white"/><circle cx="4.8" cy="6.5" r="0.6" fill="white"/><circle cx="6.4" cy="6.5" r="0.6" fill="white"/><circle cx="8.0" cy="6.5" r="0.6" fill="white"/></svg>
+                EN-Q + EN-STRONG
+                <span class="action-badge skipped">跳过工具 Tool Skipped</span>
+              </div>
+              <div style="font-size:12px;color:#6b7280;margin-bottom:6px;">问题："What is 347 multiplied by 29?"</div>
+              <div class="output-box">347 multiplied by 29 is:
+347 × 29 = 10063</div>
+              <div class="verdict bad">自行心算（Self-computed），未调用工具</div>
+            </div>
+            <div class="example-panel cn-q">
+              <div class="example-panel-title" style="color:#15803d;">
+                <svg width="22" height="14" viewBox="0 0 24 16" xmlns="http://www.w3.org/2000/svg" style="border-radius:2px;flex-shrink:0"><rect width="24" height="16" fill="#DE2910"/><polygon points="4,1.5 4.9,4.3 7.8,4.3 5.5,6 6.4,8.8 4,7.1 1.6,8.8 2.5,6 0.2,4.3 3.1,4.3" fill="#FFDE00"/><polygon points="0,0 0.5,1.5 2,1.5 0.8,2.4 1.3,3.9 0,3 -1.3,3.9 -0.8,2.4 -2,1.5 -0.5,1.5" fill="#FFDE00" transform="translate(10.5,1.2) scale(0.7)"/><polygon points="0,0 0.5,1.5 2,1.5 0.8,2.4 1.3,3.9 0,3 -1.3,3.9 -0.8,2.4 -2,1.5 -0.5,1.5" fill="#FFDE00" transform="translate(12.5,3.5) scale(0.7)"/><polygon points="0,0 0.5,1.5 2,1.5 0.8,2.4 1.3,3.9 0,3 -1.3,3.9 -0.8,2.4 -2,1.5 -0.5,1.5" fill="#FFDE00" transform="translate(12.5,6.5) scale(0.7)"/><polygon points="0,0 0.5,1.5 2,1.5 0.8,2.4 1.3,3.9 0,3 -1.3,3.9 -0.8,2.4 -2,1.5 -0.5,1.5" fill="#FFDE00" transform="translate(10.5,8.8) scale(0.7)"/></svg>
+                CN-Q + CN-STRONG
+                <span class="action-badge called">调用工具 Tool Called ✓</span>
+              </div>
+              <div style="font-size:12px;color:#6b7280;margin-bottom:6px;">问题："347 乘以 29 等于多少？"</div>
+              <div class="output-box called-fn">→ Function Call:
+calculate("347 * 29")</div>
+              <div class="verdict good">正确调用（Tool Called），参数精准</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Type B example -->
+        <div class="example">
+          <div class="example-header">
+            <span class="type-tag" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;">B 类 · 一步文字题 One-step Word Problem</span>
+            <span class="q-text">B05 — "衬衫 $45，打八折，售价？"</span>
+          </div>
+          <div class="example-panels">
+            <div class="example-panel en-q">
+              <div class="example-panel-title" style="color:#1d4ed8;">
+                <svg width="22" height="14" viewBox="0 0 24 16" xmlns="http://www.w3.org/2000/svg" style="border-radius:2px;flex-shrink:0"><rect width="24" height="16" fill="#B22234"/><rect y="1.23" width="24" height="1.23" fill="white"/><rect y="3.69" width="24" height="1.23" fill="white"/><rect y="6.15" width="24" height="1.23" fill="white"/><rect y="8.62" width="24" height="1.23" fill="white"/><rect y="11.08" width="24" height="1.23" fill="white"/><rect y="13.54" width="24" height="1.23" fill="white"/><rect width="9.6" height="8.62" fill="#3C3B6E"/><circle cx="1.6" cy="1.1" r="0.6" fill="white"/><circle cx="3.2" cy="1.1" r="0.6" fill="white"/><circle cx="4.8" cy="1.1" r="0.6" fill="white"/><circle cx="6.4" cy="1.1" r="0.6" fill="white"/><circle cx="8.0" cy="1.1" r="0.6" fill="white"/><circle cx="1.6" cy="2.9" r="0.6" fill="white"/><circle cx="3.2" cy="2.9" r="0.6" fill="white"/><circle cx="4.8" cy="2.9" r="0.6" fill="white"/><circle cx="6.4" cy="2.9" r="0.6" fill="white"/><circle cx="8.0" cy="2.9" r="0.6" fill="white"/><circle cx="1.6" cy="4.7" r="0.6" fill="white"/><circle cx="3.2" cy="4.7" r="0.6" fill="white"/><circle cx="4.8" cy="4.7" r="0.6" fill="white"/><circle cx="6.4" cy="4.7" r="0.6" fill="white"/><circle cx="8.0" cy="4.7" r="0.6" fill="white"/><circle cx="1.6" cy="6.5" r="0.6" fill="white"/><circle cx="3.2" cy="6.5" r="0.6" fill="white"/><circle cx="4.8" cy="6.5" r="0.6" fill="white"/><circle cx="6.4" cy="6.5" r="0.6" fill="white"/><circle cx="8.0" cy="6.5" r="0.6" fill="white"/></svg>
+                EN-Q + EN-STRONG
+                <span class="action-badge skipped">跳过工具 Tool Skipped</span>
+              </div>
+              <div style="font-size:12px;color:#6b7280;margin-bottom:6px;">问题："A shirt costs $45 and is on sale at 20% off. What is the sale price?"</div>
+              <div class="output-box">20% off means:
+Discount = 0.20 × $45 = $9.00
+Sale price = $45 − $9 = $36.00</div>
+              <div class="verdict bad">自行推导（Self-reasoned），未调用工具</div>
+            </div>
+            <div class="example-panel cn-q">
+              <div class="example-panel-title" style="color:#15803d;">
+                <svg width="22" height="14" viewBox="0 0 24 16" xmlns="http://www.w3.org/2000/svg" style="border-radius:2px;flex-shrink:0"><rect width="24" height="16" fill="#DE2910"/><polygon points="4,1.5 4.9,4.3 7.8,4.3 5.5,6 6.4,8.8 4,7.1 1.6,8.8 2.5,6 0.2,4.3 3.1,4.3" fill="#FFDE00"/><polygon points="0,0 0.5,1.5 2,1.5 0.8,2.4 1.3,3.9 0,3 -1.3,3.9 -0.8,2.4 -2,1.5 -0.5,1.5" fill="#FFDE00" transform="translate(10.5,1.2) scale(0.7)"/><polygon points="0,0 0.5,1.5 2,1.5 0.8,2.4 1.3,3.9 0,3 -1.3,3.9 -0.8,2.4 -2,1.5 -0.5,1.5" fill="#FFDE00" transform="translate(12.5,3.5) scale(0.7)"/><polygon points="0,0 0.5,1.5 2,1.5 0.8,2.4 1.3,3.9 0,3 -1.3,3.9 -0.8,2.4 -2,1.5 -0.5,1.5" fill="#FFDE00" transform="translate(12.5,6.5) scale(0.7)"/><polygon points="0,0 0.5,1.5 2,1.5 0.8,2.4 1.3,3.9 0,3 -1.3,3.9 -0.8,2.4 -2,1.5 -0.5,1.5" fill="#FFDE00" transform="translate(10.5,8.8) scale(0.7)"/></svg>
+                CN-Q + CN-STRONG
+                <span class="action-badge called">调用工具 Tool Called ✓</span>
+              </div>
+              <div style="font-size:12px;color:#6b7280;margin-bottom:6px;">问题："一件衬衫售价 45 美元，打八折出售，售价是多少？"</div>
+              <div class="output-box called-fn">→ Function Call:
+calculate("45 * 0.8")</div>
+              <div class="verdict good">列式后调用（Expression derived），参数正确</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Type C example -->
+        <div class="example">
+          <div class="example-header">
+            <span class="type-tag" style="background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;">C 类 · 多步文字题 Multi-step Word Problem</span>
+            <span class="q-text">C01 — "3 箱 × 128 件 − 45 件，剩余？"</span>
+          </div>
+          <div class="example-panels">
+            <div class="example-panel en-q">
+              <div class="example-panel-title" style="color:#1d4ed8;">
+                <svg width="22" height="14" viewBox="0 0 24 16" xmlns="http://www.w3.org/2000/svg" style="border-radius:2px;flex-shrink:0"><rect width="24" height="16" fill="#B22234"/><rect y="1.23" width="24" height="1.23" fill="white"/><rect y="3.69" width="24" height="1.23" fill="white"/><rect y="6.15" width="24" height="1.23" fill="white"/><rect y="8.62" width="24" height="1.23" fill="white"/><rect y="11.08" width="24" height="1.23" fill="white"/><rect y="13.54" width="24" height="1.23" fill="white"/><rect width="9.6" height="8.62" fill="#3C3B6E"/><circle cx="1.6" cy="1.1" r="0.6" fill="white"/><circle cx="3.2" cy="1.1" r="0.6" fill="white"/><circle cx="4.8" cy="1.1" r="0.6" fill="white"/><circle cx="6.4" cy="1.1" r="0.6" fill="white"/><circle cx="8.0" cy="1.1" r="0.6" fill="white"/><circle cx="1.6" cy="2.9" r="0.6" fill="white"/><circle cx="3.2" cy="2.9" r="0.6" fill="white"/><circle cx="4.8" cy="2.9" r="0.6" fill="white"/><circle cx="6.4" cy="2.9" r="0.6" fill="white"/><circle cx="8.0" cy="2.9" r="0.6" fill="white"/><circle cx="1.6" cy="4.7" r="0.6" fill="white"/><circle cx="3.2" cy="4.7" r="0.6" fill="white"/><circle cx="4.8" cy="4.7" r="0.6" fill="white"/><circle cx="6.4" cy="4.7" r="0.6" fill="white"/><circle cx="8.0" cy="4.7" r="0.6" fill="white"/><circle cx="1.6" cy="6.5" r="0.6" fill="white"/><circle cx="3.2" cy="6.5" r="0.6" fill="white"/><circle cx="4.8" cy="6.5" r="0.6" fill="white"/><circle cx="6.4" cy="6.5" r="0.6" fill="white"/><circle cx="8.0" cy="6.5" r="0.6" fill="white"/></svg>
+                EN-Q + EN-STRONG
+                <span class="action-badge skipped">跳过工具 Tool Skipped</span>
+              </div>
+              <div style="font-size:12px;color:#6b7280;margin-bottom:6px;">问题："I have 3 boxes each containing 128 items. I remove 45 items in total. How many remain?"</div>
+              <div class="output-box">Step 1: Total items = 3 × 128 = 384
+Step 2: Remaining = 384 − 45 = 339</div>
+              <div class="verdict bad">分步推导（Step-by-step）但未调用工具</div>
+            </div>
+            <div class="example-panel cn-q">
+              <div class="example-panel-title" style="color:#15803d;">
+                <svg width="22" height="14" viewBox="0 0 24 16" xmlns="http://www.w3.org/2000/svg" style="border-radius:2px;flex-shrink:0"><rect width="24" height="16" fill="#DE2910"/><polygon points="4,1.5 4.9,4.3 7.8,4.3 5.5,6 6.4,8.8 4,7.1 1.6,8.8 2.5,6 0.2,4.3 3.1,4.3" fill="#FFDE00"/><polygon points="0,0 0.5,1.5 2,1.5 0.8,2.4 1.3,3.9 0,3 -1.3,3.9 -0.8,2.4 -2,1.5 -0.5,1.5" fill="#FFDE00" transform="translate(10.5,1.2) scale(0.7)"/><polygon points="0,0 0.5,1.5 2,1.5 0.8,2.4 1.3,3.9 0,3 -1.3,3.9 -0.8,2.4 -2,1.5 -0.5,1.5" fill="#FFDE00" transform="translate(12.5,3.5) scale(0.7)"/><polygon points="0,0 0.5,1.5 2,1.5 0.8,2.4 1.3,3.9 0,3 -1.3,3.9 -0.8,2.4 -2,1.5 -0.5,1.5" fill="#FFDE00" transform="translate(12.5,6.5) scale(0.7)"/><polygon points="0,0 0.5,1.5 2,1.5 0.8,2.4 1.3,3.9 0,3 -1.3,3.9 -0.8,2.4 -2,1.5 -0.5,1.5" fill="#FFDE00" transform="translate(10.5,8.8) scale(0.7)"/></svg>
+                CN-Q + CN-STRONG
+                <span class="action-badge called">调用工具 Tool Called ✓</span>
+              </div>
+              <div style="font-size:12px;color:#6b7280;margin-bottom:6px;">问题："我有 3 箱物品，每箱 128 件，共取走 45 件，还剩多少件？"</div>
+              <div class="output-box called-fn">→ Function Call:
+calculate("3 * 128 - 45")</div>
+              <div class="verdict good">先列完整算式，再调用（Full expression）</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Type D example -->
+        <div class="example">
+          <div class="example-header">
+            <span class="type-tag" style="background:#fdf4ff;color:#7c3aed;border:1px solid #d8b4fe;">D 类 · 公式应用题 Applied Formula</span>
+            <span class="q-text">D01 — "87 km/h × 4.5 h，路程？"</span>
+          </div>
+          <div class="example-panels">
+            <div class="example-panel en-q">
+              <div class="example-panel-title" style="color:#1d4ed8;">
+                <svg width="22" height="14" viewBox="0 0 24 16" xmlns="http://www.w3.org/2000/svg" style="border-radius:2px;flex-shrink:0"><rect width="24" height="16" fill="#B22234"/><rect y="1.23" width="24" height="1.23" fill="white"/><rect y="3.69" width="24" height="1.23" fill="white"/><rect y="6.15" width="24" height="1.23" fill="white"/><rect y="8.62" width="24" height="1.23" fill="white"/><rect y="11.08" width="24" height="1.23" fill="white"/><rect y="13.54" width="24" height="1.23" fill="white"/><rect width="9.6" height="8.62" fill="#3C3B6E"/><circle cx="1.6" cy="1.1" r="0.6" fill="white"/><circle cx="3.2" cy="1.1" r="0.6" fill="white"/><circle cx="4.8" cy="1.1" r="0.6" fill="white"/><circle cx="6.4" cy="1.1" r="0.6" fill="white"/><circle cx="8.0" cy="1.1" r="0.6" fill="white"/><circle cx="1.6" cy="2.9" r="0.6" fill="white"/><circle cx="3.2" cy="2.9" r="0.6" fill="white"/><circle cx="4.8" cy="2.9" r="0.6" fill="white"/><circle cx="6.4" cy="2.9" r="0.6" fill="white"/><circle cx="8.0" cy="2.9" r="0.6" fill="white"/><circle cx="1.6" cy="4.7" r="0.6" fill="white"/><circle cx="3.2" cy="4.7" r="0.6" fill="white"/><circle cx="4.8" cy="4.7" r="0.6" fill="white"/><circle cx="6.4" cy="4.7" r="0.6" fill="white"/><circle cx="8.0" cy="4.7" r="0.6" fill="white"/><circle cx="1.6" cy="6.5" r="0.6" fill="white"/><circle cx="3.2" cy="6.5" r="0.6" fill="white"/><circle cx="4.8" cy="6.5" r="0.6" fill="white"/><circle cx="6.4" cy="6.5" r="0.6" fill="white"/><circle cx="8.0" cy="6.5" r="0.6" fill="white"/></svg>
+                EN-Q + EN-STRONG
+                <span class="action-badge skipped">跳过工具 Tool Skipped</span>
+              </div>
+              <div style="font-size:12px;color:#6b7280;margin-bottom:6px;">问题："A train travels at 87 km/h for 4.5 hours. What is the total distance?"</div>
+              <div class="output-box">Using d = v × t:
+Distance = 87 × 4.5 = 391.5 km</div>
+              <div class="verdict bad">套公式自算（Formula self-applied），未调用</div>
+            </div>
+            <div class="example-panel cn-q">
+              <div class="example-panel-title" style="color:#15803d;">
+                <svg width="22" height="14" viewBox="0 0 24 16" xmlns="http://www.w3.org/2000/svg" style="border-radius:2px;flex-shrink:0"><rect width="24" height="16" fill="#DE2910"/><polygon points="4,1.5 4.9,4.3 7.8,4.3 5.5,6 6.4,8.8 4,7.1 1.6,8.8 2.5,6 0.2,4.3 3.1,4.3" fill="#FFDE00"/><polygon points="0,0 0.5,1.5 2,1.5 0.8,2.4 1.3,3.9 0,3 -1.3,3.9 -0.8,2.4 -2,1.5 -0.5,1.5" fill="#FFDE00" transform="translate(10.5,1.2) scale(0.7)"/><polygon points="0,0 0.5,1.5 2,1.5 0.8,2.4 1.3,3.9 0,3 -1.3,3.9 -0.8,2.4 -2,1.5 -0.5,1.5" fill="#FFDE00" transform="translate(12.5,3.5) scale(0.7)"/><polygon points="0,0 0.5,1.5 2,1.5 0.8,2.4 1.3,3.9 0,3 -1.3,3.9 -0.8,2.4 -2,1.5 -0.5,1.5" fill="#FFDE00" transform="translate(12.5,6.5) scale(0.7)"/><polygon points="0,0 0.5,1.5 2,1.5 0.8,2.4 1.3,3.9 0,3 -1.3,3.9 -0.8,2.4 -2,1.5 -0.5,1.5" fill="#FFDE00" transform="translate(10.5,8.8) scale(0.7)"/></svg>
+                CN-Q + CN-STRONG
+                <span class="action-badge called">调用工具 Tool Called ✓</span>
+              </div>
+              <div style="font-size:12px;color:#6b7280;margin-bottom:6px;">问题："一列火车以 87 公里/小时的速度行驶了 4.5 小时，总里程是多少？"</div>
+              <div class="output-box called-fn">→ Function Call:
+calculate("87 * 4.5")</div>
+              <div class="verdict good">代入数值后直接调用（Substituted and called）</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ CONCLUSION ═══ -->
+  <div class="section" id="conclusion">
+    <div class="section-title">
+      <span class="badge">结论</span>
+      实践建议
+    </div>
+    <div class="conclusions">
+      <div class="conclusion-card rule1">
+        <div class="num">01</div>
+        <h3>工具描述（Tool Description）用中文写</h3>
+        <p>Qwen 系列中文模型对中文描述的语义敏感度更高。中文弱描述（CN-WEAK，47%）已优于英文强描述（EN-STRONG，47%），中文强描述（CN-STRONG）则达到 88%，领先英文版 <strong>+41%</strong>。</p>
+      </div>
+      <div class="conclusion-card rule2">
+        <div class="num">02</div>
+        <h3>明确写触发条件（Trigger Condition）</h3>
+        <p>用 "<code>触发条件：只要遇到 X，必须调用</code>" 而非 "<code>可以用来处理 X</code>"。强制语气（mandatory）vs 弱语气（vague）：CN-STRONG（88%）vs CN-WEAK（32%）= 提升 <strong>+56%</strong>。</p>
+      </div>
+      <div class="conclusion-card rule3">
+        <div class="num">03</div>
+        <h3>使用"必须/禁止"强制语言（Mandatory Keywords）</h3>
+        <p>中文"<code>必须调用</code>"、"<code>禁止自行计算</code>"在中文语境下约束力远强于英文 REQUIRED/MUST。即使问题是英文，中文描述的效果也更好（EN-Q + CN-STRONG = 88%）。</p>
+      </div>
+      <div class="conclusion-card rule4">
+        <div class="num">04</div>
+        <h3>文字题补充"先列式"说明（Word Problem Guidance）</h3>
+        <p>对需先理解语义的多步题（C类），加入 "<code>先在脑中列出算式，再传入工具，不得直接给答案</code>"。C类是所有题型中最难触发的，最佳条件下仍有差距（EN-Q 72% · CN-Q 56%）。</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px;background:linear-gradient(135deg,#0f172a,#1e1b4b);color:white;border:none;">
+      <div style="font-size:13px;color:#94a3b8;margin-bottom:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">总结 Summary</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;">
+        <div>
+          <div style="font-size:28px;font-weight:800;color:#60a5fa;">100%</div>
+          <div style="font-size:13px;color:#94a3b8;">大海捞针准确率<br>Needle-in-Haystack<br>（~2000词，5个位置）</div>
+        </div>
+        <div>
+          <div style="font-size:28px;font-weight:800;color:#34d399;">+60%</div>
+          <div style="font-size:13px;color:#94a3b8;">开启推理链后<br>With Chain-of-Thought<br>复杂推理提升幅度</div>
+        </div>
+        <div>
+          <div style="font-size:28px;font-weight:800;color:#f472b6;">+41%</div>
+          <div style="font-size:13px;color:#94a3b8;">中文 vs 英文描述（STRONG）<br>Chinese vs English Desc<br>EN-Q 下工具触发率提升</div>
+        </div>
+        <div>
+          <div style="font-size:28px;font-weight:800;color:#fbbf24;">88%</div>
+          <div style="font-size:13px;color:#94a3b8;">最优配置触发率<br>Best Config Call Rate<br>EN-Q + CN-STRONG，100题验证</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<div class="footer">
+  <div style="max-width:1100px;margin:0 auto;display:flex;gap:32px;flex-wrap:wrap;justify-content:space-between;">
+    <div>
+      <div style="color:#e2e8f0;font-weight:600;margin-bottom:8px;">一键复刻实验 Reproduce Experiments</div>
+      <div style="font-family:monospace;font-size:12px;line-height:2;">
+        pip install requests<br>
+        python scripts/needle_in_haystack.py<br>
+        python scripts/reasoning_retrieval.py<br>
+        python scripts/function_call_loop.py<br>
+        python scripts/full_test.py
+      </div>
+    </div>
+    <div>
+      <div style="color:#e2e8f0;font-weight:600;margin-bottom:8px;">文件结构 File Structure</div>
+      <div style="font-family:monospace;font-size:12px;line-height:2;">
+        report/<br>
+        ├── index.html              ← 本页面<br>
+        ├── data/new_results.json   ← 100题原始数据<br>
+        ├── scripts/full_test.py    ← 主测试脚本<br>
+        └── Old_data/               ← 早期20题数据
+      </div>
+    </div>
+    <div>
+      <div style="color:#e2e8f0;font-weight:600;margin-bottom:8px;">环境配置 Environment</div>
+      <div style="font-size:12px;line-height:2;color:#64748b;">
+        模型 Model：qwen3.5-2b<br>
+        平台 Platform：LM Studio 0.4.12 Build1<br>
+        温度 Temperature：0.1（默认 default）<br>
+        推理链 CoT：in-context chain-of-thought
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Data ──────────────────────────────────────────────────────────────────────
+const R = {
+  "EN-Q_EN-WEAK":   {ql:"en", dl:"en-weak",   total:8,  A:28, B:4,  C:0,  D:0 },
+  "EN-Q_EN-STRONG": {ql:"en", dl:"en-strong",  total:47, A:80, B:56, C:20, D:32},
+  "EN-Q_CN-WEAK":   {ql:"en", dl:"cn-weak",    total:32, A:72, B:28, C:8,  D:20},
+  "EN-Q_CN-STRONG": {ql:"en", dl:"cn-strong",  total:88, A:96, B:96, C:72, D:88},
+  "CN-Q_EN-WEAK":   {ql:"cn", dl:"en-weak",    total:27, A:48, B:44, C:12, D:4 },
+  "CN-Q_EN-STRONG": {ql:"cn", dl:"en-strong",  total:48, A:76, B:64, C:32, D:20},
+  "CN-Q_CN-WEAK":   {ql:"cn", dl:"cn-weak",    total:47, A:76, B:64, C:24, D:24},
+  "CN-Q_CN-STRONG": {ql:"cn", dl:"cn-strong",  total:78, A:92, B:84, C:56, D:80},
+};
+
+const COND_ORDER = [
+  "EN-Q_EN-WEAK","EN-Q_EN-STRONG","EN-Q_CN-WEAK","EN-Q_CN-STRONG",
+  "CN-Q_EN-WEAK","CN-Q_EN-STRONG","CN-Q_CN-WEAK","CN-Q_CN-STRONG"
+];
+
+const DESC_COLORS = {
+  "en-weak":  "#94a3b8",
+  "en-strong":"#f59e0b",
+  "cn-weak":  "#a78bfa",
+  "cn-strong":"#3b82f6"
+};
+
+const TYPE_LABELS = {A:"直接算式",B:"一步文字",C:"多步文字",D:"公式应用"};
+
+// ── Utility: pct badge class ──────────────────────────────────────────────────
+function pctClass(v) {
+  if (v === null) return 'vl';
+  if (v >= 70) return 'h';
+  if (v >= 40) return 'm';
+  if (v >= 15) return 'l';
+  return 'vl';
+}
+function pctBadge(v) {
+  if (v === null) return '<span class="pct vl">—</span>';
+  return `<span class="pct ${pctClass(v)}">${v}%</span>`;
+}
+
+// ── Render condition table ────────────────────────────────────────────────────
+function renderCondTable() {
+  const tbody = document.getElementById('cond-table-body');
+  if (!tbody) return;
+  let html = '';
+  let prevQL = null;
+  COND_ORDER.forEach(key => {
+    const r = R[key];
+    if (r.ql !== prevQL) {
+      const qlLabel = r.ql === 'en' ? '英文问题 (EN-Q)' : '中文问题 (CN-Q)';
+      html += `<tr class="sep-row"><td colspan="8">${qlLabel}</td></tr>`;
+      prevQL = r.ql;
+    }
+    const isBest = (key === 'EN-Q_CN-STRONG');
+    const dlLabels = {
+      'en-weak':'EN-WEAK（英·弱）','en-strong':'EN-STRONG（英·强）',
+      'cn-weak':'CN-WEAK（中·弱）','cn-strong':'CN-STRONG（中·强）'
+    };
+    const qlShort = r.ql === 'en' ? '英文' : '中文';
+    html += `<tr${isBest?' class="best-row"':''}>
+      <td><span style="font-family:monospace;font-size:11px;">${key}</span>${isBest?' <span style="font-size:10px;background:#2563eb;color:white;padding:1px 5px;border-radius:3px;margin-left:4px;">最优</span>':''}</td>
+      <td>${qlShort}</td>
+      <td>${dlLabels[r.dl]}</td>
+      <td>${pctBadge(r.total)}</td>
+      <td>${pctBadge(r.A)}</td>
+      <td>${pctBadge(r.B)}</td>
+      <td>${pctBadge(r.C)}</td>
+      <td>${pctBadge(r.D)}</td>
+    </tr>`;
+  });
+  tbody.innerHTML = html;
+}
+
+// ── SVG grouped vertical bar chart ───────────────────────────────────────────
+function makeBarSVG(groups, series, W, H) {
+  // groups: [{label, sub}]
+  // series: [{color, vals: [v per group]}]
+  const ml=36, mr=8, mt=20, mb=52;
+  const pw=W-ml-mr, ph=H-mt-mb;
+  const ng=groups.length, nb=series.length;
+  const gw=pw/ng;
+  const bw=Math.floor(gw*0.62/nb);
+  let s=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">`;
+  s+=`<rect width="${W}" height="${H}" fill="#f8fafc" rx="8"/>`;
+  [0,25,50,75,100].forEach(p=>{
+    const y=mt+ph*(1-p/100);
+    s+=`<line x1="${ml}" y1="${y.toFixed(1)}" x2="${W-mr}" y2="${y.toFixed(1)}" stroke="${p===0?'#9ca3af':'#e5e7eb'}" stroke-width="${p===0?1.5:0.8}"/>`;
+    s+=`<text x="${ml-4}" y="${(y+4).toFixed(1)}" text-anchor="end" font-size="9" fill="#9ca3af">${p}</text>`;
+  });
+  groups.forEach(({label,sub},gi)=>{
+    const gx=ml+gi*gw;
+    const gpad=(gw-bw*nb)/2;
+    series.forEach(({color,vals},bi)=>{
+      const v=vals[gi];
+      if(v===null||v<=0) return;
+      const bh=ph*v/100, by=mt+ph-bh;
+      const bx=gx+gpad+bi*bw;
+      s+=`<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${(bw-1).toFixed(1)}" height="${bh.toFixed(1)}" fill="${color}" rx="2"/>`;
+      if(v>=14){
+        s+=`<text x="${(bx+(bw-1)/2).toFixed(1)}" y="${(by-2.5).toFixed(1)}" text-anchor="middle" font-size="8.5" font-weight="700" fill="${color}">${v}</text>`;
+      }
+    });
+    const lx=(ml+gi*gw+gw/2).toFixed(1);
+    s+=`<text x="${lx}" y="${H-mb+14}" text-anchor="middle" font-size="11" font-weight="700" fill="#1f2937">${label}</text>`;
+    s+=`<text x="${lx}" y="${H-mb+27}" text-anchor="middle" font-size="8.5" fill="#9ca3af">${sub}</text>`;
+  });
+  s+='</svg>';
+  return s;
+}
+
+// ── Render main paired charts ─────────────────────────────────────────────────
+function renderMainCharts() {
+  const groups = [
+    {label:"A",sub:"直接算式"},
+    {label:"B",sub:"一步文字"},
+    {label:"C",sub:"多步文字"},
+    {label:"D",sub:"公式应用"}
+  ];
+  const series = [
+    {color:"#94a3b8", label:"EN-WEAK"},
+    {color:"#f59e0b", label:"EN-STRONG"},
+    {color:"#a78bfa", label:"CN-WEAK"},
+    {color:"#3b82f6", label:"CN-STRONG"},
+  ];
+
+  // EN-Q chart
+  series[0].vals = [R["EN-Q_EN-WEAK"].A,  R["EN-Q_EN-WEAK"].B,  R["EN-Q_EN-WEAK"].C,  R["EN-Q_EN-WEAK"].D];
+  series[1].vals = [R["EN-Q_EN-STRONG"].A, R["EN-Q_EN-STRONG"].B, R["EN-Q_EN-STRONG"].C, R["EN-Q_EN-STRONG"].D];
+  series[2].vals = [R["EN-Q_CN-WEAK"].A,  R["EN-Q_CN-WEAK"].B,  R["EN-Q_CN-WEAK"].C,  R["EN-Q_CN-WEAK"].D];
+  series[3].vals = [R["EN-Q_CN-STRONG"].A, R["EN-Q_CN-STRONG"].B, R["EN-Q_CN-STRONG"].C, R["EN-Q_CN-STRONG"].D];
+  document.getElementById('chart-enq').innerHTML = makeBarSVG(groups, series, 440, 240);
+
+  // CN-Q chart
+  series[0].vals = [R["CN-Q_EN-WEAK"].A,  R["CN-Q_EN-WEAK"].B,  R["CN-Q_EN-WEAK"].C,  R["CN-Q_EN-WEAK"].D];
+  series[1].vals = [R["CN-Q_EN-STRONG"].A, R["CN-Q_EN-STRONG"].B, R["CN-Q_EN-STRONG"].C, R["CN-Q_EN-STRONG"].D];
+  series[2].vals = [R["CN-Q_CN-WEAK"].A,  R["CN-Q_CN-WEAK"].B,  R["CN-Q_CN-WEAK"].C,  R["CN-Q_CN-WEAK"].D];
+  series[3].vals = [R["CN-Q_CN-STRONG"].A, R["CN-Q_CN-STRONG"].B, R["CN-Q_CN-STRONG"].C, R["CN-Q_CN-STRONG"].D];
+  document.getElementById('chart-cnq').innerHTML = makeBarSVG(groups, series, 440, 240);
+}
+
+// ── Render improvement delta charts ──────────────────────────────────────────
+function makeDeltaBarSVG(items, W, H) {
+  // items: [{label, en, cn, color}]
+  const ml=5, mr=5, mt=10, mb=5, gap=14;
+  const rowH=(H-mt-mb-(items.length-1)*gap)/items.length;
+  let s=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">`;
+  s+=`<rect width="${W}" height="${H}" fill="#f8fafc" rx="6"/>`;
+  const barArea=W*0.55, labelW=W*0.23, valW=W*0.1;
+  items.forEach(({label,en,cn,color},i)=>{
+    const y=mt+i*(rowH+gap);
+    const cy=y+rowH/2;
+    s+=`<text x="${labelW-4}" y="${cy+4}" text-anchor="end" font-size="9" fill="#6b7280">${label}</text>`;
+    const enW=(en/100)*barArea;
+    const cnW=(cn===null?0:(cn/100)*barArea);
+    s+=`<rect x="${labelW}" y="${y+1}" width="${enW.toFixed(1)}" height="${(rowH-2)/2-1}" fill="#f59e0b" rx="2"/>`;
+    s+=`<text x="${(labelW+enW+3).toFixed(1)}" y="${y+rowH/4+4}" font-size="8" fill="#b45309" font-weight="700">${en}%</text>`;
+    if(cn!==null){
+      s+=`<rect x="${labelW}" y="${y+rowH/2+1}" width="${cnW.toFixed(1)}" height="${(rowH-2)/2-1}" fill="${color}" rx="2"/>`;
+      const delta=cn-en;
+      const sign=delta>=0?'+':'';
+      s+=`<text x="${(labelW+cnW+3).toFixed(1)}" y="${y+3*rowH/4+4}" font-size="8" fill="${color}" font-weight="700">${cn}% <tspan fill="${delta>=0?'#15803d':'#dc2626'}">(${sign}${delta})</tspan></text>`;
+    } else {
+      s+=`<rect x="${labelW}" y="${y+rowH/2+1}" width="2" height="${(rowH-2)/2-1}" fill="#e5e7eb" rx="1"/>`;
+      s+=`<text x="${labelW+6}" y="${y+3*rowH/4+4}" font-size="8" fill="#9ca3af">待更新</text>`;
+    }
+  });
+  s+='</svg>';
+  return s;
+}
+
+function renderImprovementCharts() {
+  const container = document.getElementById('improvement-charts');
+  if (!container) return;
+
+  // 3 comparison charts: WEAK, STRONG, overall
+  const charts = [
+    {
+      title:"WEAK 强度：EN-WEAK vs CN-WEAK",
+      subtitle:"同等弱描述，英文 vs 中文",
+      items:[
+        {label:"EN-Q 总体", en:R["EN-Q_EN-WEAK"].total, cn:R["EN-Q_CN-WEAK"].total, color:"#a78bfa"},
+        {label:"EN-Q 类型A", en:R["EN-Q_EN-WEAK"].A, cn:R["EN-Q_CN-WEAK"].A, color:"#a78bfa"},
+        {label:"EN-Q 类型B", en:R["EN-Q_EN-WEAK"].B, cn:R["EN-Q_CN-WEAK"].B, color:"#a78bfa"},
+        {label:"EN-Q 类型C", en:R["EN-Q_EN-WEAK"].C, cn:R["EN-Q_CN-WEAK"].C, color:"#a78bfa"},
+        {label:"EN-Q 类型D", en:R["EN-Q_EN-WEAK"].D, cn:R["EN-Q_CN-WEAK"].D, color:"#a78bfa"},
+        {label:"CN-Q 总体", en:R["CN-Q_EN-WEAK"].total, cn:R["CN-Q_CN-WEAK"].total, color:"#a78bfa"},
+        {label:"CN-Q 类型A", en:R["CN-Q_EN-WEAK"].A, cn:R["CN-Q_CN-WEAK"].A, color:"#a78bfa"},
+        {label:"CN-Q 类型C", en:R["CN-Q_EN-WEAK"].C, cn:R["CN-Q_CN-WEAK"].C, color:"#a78bfa"},
+      ]
+    },
+    {
+      title:"STRONG 强度：EN-STRONG vs CN-STRONG",
+      subtitle:"同等强描述，英文 vs 中文",
+      items:[
+        {label:"EN-Q 总体", en:R["EN-Q_EN-STRONG"].total, cn:R["EN-Q_CN-STRONG"].total, color:"#3b82f6"},
+        {label:"EN-Q 类型A", en:R["EN-Q_EN-STRONG"].A, cn:R["EN-Q_CN-STRONG"].A, color:"#3b82f6"},
+        {label:"EN-Q 类型B", en:R["EN-Q_EN-STRONG"].B, cn:R["EN-Q_CN-STRONG"].B, color:"#3b82f6"},
+        {label:"EN-Q 类型C", en:R["EN-Q_EN-STRONG"].C, cn:R["EN-Q_CN-STRONG"].C, color:"#3b82f6"},
+        {label:"EN-Q 类型D", en:R["EN-Q_EN-STRONG"].D, cn:R["EN-Q_CN-STRONG"].D, color:"#3b82f6"},
+        {label:"CN-Q 总体", en:R["CN-Q_EN-STRONG"].total, cn:R["CN-Q_CN-STRONG"].total, color:"#3b82f6"},
+        {label:"CN-Q 类型A", en:R["CN-Q_EN-STRONG"].A, cn:R["CN-Q_CN-STRONG"].A, color:"#3b82f6"},
+        {label:"CN-Q 类型C", en:R["CN-Q_EN-STRONG"].C, cn:R["CN-Q_CN-STRONG"].C, color:"#3b82f6"},
+      ]
+    },
+    {
+      title:"最优配置 Best Config：总体对比",
+      subtitle:"8种条件下的全局触发率",
+      items:[
+        {label:"EN-Q+EN-WEAK",  en:R["EN-Q_EN-WEAK"].total,  cn:null, color:"#94a3b8"},
+        {label:"EN-Q+EN-STRONG",en:R["EN-Q_EN-STRONG"].total, cn:null, color:"#f59e0b"},
+        {label:"EN-Q+CN-WEAK",  en:R["EN-Q_CN-WEAK"].total,  cn:null, color:"#a78bfa"},
+        {label:"EN-Q+CN-STRONG",en:0, cn:R["EN-Q_CN-STRONG"].total, color:"#3b82f6"},
+        {label:"CN-Q+EN-WEAK",  en:R["CN-Q_EN-WEAK"].total,  cn:null, color:"#94a3b8"},
+        {label:"CN-Q+EN-STRONG",en:R["CN-Q_EN-STRONG"].total, cn:null, color:"#f59e0b"},
+        {label:"CN-Q+CN-WEAK",  en:R["CN-Q_CN-WEAK"].total,  cn:null, color:"#a78bfa"},
+        {label:"CN-Q+CN-STRONG",en:0, cn:R["CN-Q_CN-STRONG"].total, color:"#3b82f6"},
+      ]
+    }
+  ];
+
+  let html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;">';
+  charts.forEach(ch=>{
+    html += `<div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:14px;">
+      <div style="font-size:12px;font-weight:700;color:var(--dark);margin-bottom:3px;">${ch.title}</div>
+      <div style="font-size:11px;color:var(--gray);margin-bottom:10px;">${ch.subtitle}</div>
+      <div style="font-size:10px;color:#94a3b8;margin-bottom:6px;display:flex;gap:12px;">
+        <span><span style="display:inline-block;width:10px;height:6px;background:#f59e0b;border-radius:1px;vertical-align:middle;margin-right:3px;"></span>英文描述 EN</span>
+        <span><span style="display:inline-block;width:10px;height:6px;background:#3b82f6;border-radius:1px;vertical-align:middle;margin-right:3px;"></span>中文描述 CN</span>
+      </div>`;
+    ch.items.forEach(({label,en,cn,color})=>{
+      const enW = en > 0 ? `${en}%` : '0%';
+      const cnDisp = cn !== null ? cn : '—';
+      const delta = cn !== null && en > 0 ? cn - en : null;
+      const deltaStr = delta !== null ? `<span style="color:${delta>=0?'#15803d':'#dc2626'};font-weight:700;">(${delta>=0?'+':''}${delta})</span>` : '';
+      html += `<div style="margin-bottom:5px;">
+        <div style="font-size:9px;color:#6b7280;margin-bottom:2px;">${label}</div>
+        <div style="display:flex;gap:3px;align-items:center;">
+          <div style="flex:1;background:#e5e7eb;border-radius:3px;height:10px;position:relative;overflow:hidden;">
+            <div style="height:5px;background:#f59e0b;width:${enW};border-radius:2px 2px 0 0;"></div>
+            <div style="height:5px;background:${color};width:${cn!==null?cn+'%':'0'};border-radius:0 0 2px 2px;"></div>
+          </div>
+          <div style="font-size:9px;min-width:70px;color:#374151;">${en>0?en+'%':'—'} → ${cnDisp!=='—'?cnDisp+'%':cnDisp} ${deltaStr}</div>
+        </div>
+      </div>`;
+    });
+    html += '</div>';
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  renderCondTable();
+  renderMainCharts();
+  renderImprovementCharts();
+});
+</script>
+</body>
+</html>
