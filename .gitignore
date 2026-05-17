@@ -18,3 +18,6 @@ Thumbs.db
 # Env vars
 .env
 .env.*
+
+# AI assistant local notice
+AI_NOTICE.md
