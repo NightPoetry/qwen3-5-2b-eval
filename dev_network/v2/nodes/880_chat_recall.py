@@ -270,8 +270,19 @@ def execute(ctx: dict) -> dict:
                 if mem not in summary_hits:
                     summary_hits.append(mem)
 
-    # ── 4. bigram 搜索 (替换旧关键词匹配) ──
+    # ── 4. bigram 搜索 + 追问时 LLM 精炼查询 (evolve_query) ──
     task_text = task
+    if is_followup and not summary_challenged:
+        prev_shown = ctx.get("_recall_shown_text", "")
+        evolved = ask(
+            "用户追问要找更多内容。根据已找到的内容和用户追问，"
+            "提取2-3个最关键的搜索词（用空格分隔）。只回答关键词。",
+            f"原始问题：{ctx.get('_recall_question', task)}\n"
+            f"已找到：{prev_shown[:200]}\n用户追问：{task}",
+            max_tokens=20
+        ).strip()
+        if evolved and len(evolved) > 1:
+            task_text = evolved
     for c in chunks:
         c["score"] = bigram_score(task_text, c["text"])
 
@@ -326,6 +337,8 @@ def execute(ctx: dict) -> dict:
 
     for c in top:
         recalled_lines.extend(chunk_to_lines(c))
+
+    ctx["_recall_shown_text"] = "\n".join(recalled_lines[:6])
 
     ctx["_recalled"] = {
         "found": True,
