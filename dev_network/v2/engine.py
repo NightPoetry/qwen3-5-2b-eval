@@ -201,7 +201,13 @@ class Engine:
             if node.metadata.get("category") == "domain":
                 context["_active_domain"] = node.id
 
-            for ref_id in reversed(node.refs):
+            active_refs = node.refs
+            route_filter = context.get("_eng_refs")
+            if route_filter and node.metadata.get("category") == "domain":
+                active_refs = [r for r in node.refs if r in route_filter]
+                context.pop("_eng_refs", None)
+
+            for ref_id in reversed(active_refs):
                 if ref_id not in visited:
                     ref_node = self.nodes.get(ref_id)
                     if ref_node and self.check_trigger(ref_node, context):
