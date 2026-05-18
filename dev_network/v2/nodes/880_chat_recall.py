@@ -197,6 +197,32 @@ def execute(ctx: dict) -> dict:
 
     task = ctx.get("task", "")
     log_path = ctx.get("_chat_log_path", "")
+    turns = ctx.get("_turns", [])
+
+    # L0: _turns 快速搜索（当前会话内存中，最快）
+    if turns and len(turns) >= 4:
+        best_i, best_score = -1, 0
+        for i, t in enumerate(turns[:-1]):
+            if t == task: continue
+            s = bigram_score(task, t)
+            if s > best_score:
+                best_i, best_score = i, s
+        if best_score > 0.12 and best_i >= 0:
+            lo = max(0, best_i - 1)
+            hi = min(len(turns), best_i + 2)
+            context_lines = []
+            for j in range(lo, hi):
+                role = "用户" if j % 2 == 0 else "你"
+                context_lines.append(f"{role}：{turns[j][:100]}")
+            resp = ask(
+                "用户问起之前聊过的事。根据下面的对话记录，准确告诉用户。\n"
+                "只说记录里有的内容，不要编造。如果记录里没有，说'我不记得了'。",
+                f"记录：\n{chr(10).join(context_lines)}\n\n用户问：{task}",
+                temperature=0.3, max_tokens=80).strip()
+            ctx["_chat_response"] = resp
+            ctx["_recall_depth"] = 1
+            return ctx
+
     chat_log = load_chat_log(log_path)
     if not chat_log or len(chat_log) < 2:
         return ctx

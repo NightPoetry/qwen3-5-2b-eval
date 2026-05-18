@@ -1,4 +1,4 @@
-"""对话节点：兜底对话 — 用近几轮对话维持连贯。
+"""对话节点：兜底对话 — 话题感知 + 近轮上下文。
 """
 import sys; from pathlib import Path; sys.path.insert(0, str(Path(__file__).parent.parent))
 from engine import Node
@@ -13,16 +13,22 @@ TECHNICAL_KEYS = [
 SYSTEM_FIRST = (
     "你是用户的朋友。自然地回应用户说的话。\n"
     "简短、真诚、有温度。一两句话。不要用emoji。\n"
+    "不要编造你没有的经历。不要假装见过用户。\n"
     "如果不确定用户想聊什么，可以友好地问一下。"
 )
 
 SYSTEM_CONTINUE = (
     "你是用户的朋友，你们正在聊天。\n"
     "下面给出了最近几轮对话，请根据对话上下文自然地接着聊。\n"
-    "关键：回复要衔接上一句话的意思，不要跳到无关话题。\n"
-    "简短、真诚。一两句话。不要用emoji。"
+    "关键：回复要衔接用户最后一句话的意思。\n"
+    "简短、真诚。一两句话。不要用emoji。不要编造经历。"
 )
 
+SYSTEM_TOPIC_SWITCH = (
+    "你是用户的朋友，你们正在聊天。\n"
+    "用户刚换了一个新话题，请直接回应新话题，不要再提之前的话题。\n"
+    "简短、真诚。一两句话。不要用emoji。不要编造经历。"
+)
 
 TASK_WORDS = [
     "写", "创建", "生成", "开发", "实现", "做一个", "帮我",
@@ -32,6 +38,16 @@ TASK_WORDS = [
     "代码", "函数", "组件", "页面", "应用", "网站", "接口",
     "flex", "css", "html", "js", "python", "rust",
 ]
+
+def _bigrams(text):
+    s = text.lower()
+    return {s[i:i+2] for i in range(len(s) - 1)}
+
+def _topic_related(task, recent_text):
+    qb = _bigrams(task)
+    if not qb: return True
+    tb = _bigrams(recent_text)
+    return len(qb & tb) / len(qb) > 0.12
 
 def execute(ctx: dict) -> dict:
     if ctx.get("_chat_response"):
@@ -52,12 +68,20 @@ def execute(ctx: dict) -> dict:
 
     if in_conversation:
         recent = turns[-6:] if len(turns) > 6 else turns
+        recent_text = " ".join(recent[-4:])
+        topic_switch = not _topic_related(task, recent_text)
+
         history_lines = []
         for i, t in enumerate(recent):
             role = "用户" if i % 2 == 0 or i == len(recent) - 1 else "你"
             history_lines.append(f"{role}：{t}")
-        prompt = "\n".join(history_lines)
-        system = SYSTEM_CONTINUE
+
+        if topic_switch:
+            prompt = "\n".join(history_lines[-2:]) + f"\n用户（新话题）：{task}"
+            system = SYSTEM_TOPIC_SWITCH
+        else:
+            prompt = "\n".join(history_lines)
+            system = SYSTEM_CONTINUE
     else:
         prompt = f"用户：{task}"
         system = SYSTEM_FIRST
