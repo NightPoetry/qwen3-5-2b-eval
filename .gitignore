@@ -29,4 +29,7 @@ dev_network/v2/output/
 dev_network/v2/.session.json
 
 # v1 legacy output artifacts
-dev_network/outputs/
+dev_network/v1/outputs/
+
+# Archive (historical backups, not needed in repo)
+dev_network/v2/_archive/

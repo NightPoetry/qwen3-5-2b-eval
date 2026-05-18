@@ -1,8 +1,8 @@
 """记忆节点：bigram检索 + 渐进降级 + 指针缓存 + 概括记忆。
 
 灵感来源:
-  - GrowBox: bigram相关度(不依赖嵌入)、Walnut指针(O(1)跳转)、渐进回退
-  - HelloWorldStoryEngine: 触发门控、关键词回退链、auto-shortening路径
+  - companion-project: bigram相关度(不依赖嵌入)、Walnut指针(O(1)跳转)、渐进回退
+  - narrative-engine-prototype: 触发门控、关键词回退链、auto-shortening路径
 
 触发: "记得/之前/..." 或追问词("不对/还有..." 且有召回上下文)
 机制:
@@ -63,7 +63,7 @@ TOP_K_FOLLOWUP = 14
 
 
 # ═══════════════════════════════════════════════
-# Bigram 相关度 (灵感: GrowBox — 不依赖嵌入，纯字符级)
+# Bigram 相关度 (灵感: companion-project — 不依赖嵌入，纯字符级)
 # ═══════════════════════════════════════════════
 
 def bigrams(text: str) -> set:
@@ -82,7 +82,7 @@ def bigram_score(query: str, text: str) -> float:
 
 
 # ═══════════════════════════════════════════════
-# 指针缓存 (灵感: GrowBox Walnut — query_hash→结果 O(1))
+# 指针缓存 (灵感: companion-project Walnut — query_hash→结果 O(1))
 # ═══════════════════════════════════════════════
 
 def _query_hash(query: str) -> str:
@@ -206,7 +206,7 @@ def execute(ctx: dict) -> dict:
         and any(w in task for w in ["不对", "不是", "不全", "漏了"])
     )
 
-    # ── 0. 指针缓存 O(1) 命中 (灵感: GrowBox Walnut) ──
+    # ── 0. 指针缓存 O(1) 命中 (灵感: companion-project Walnut) ──
     # 新检索（非追问）时优先检查指针
     if not is_followup and not summary_challenged:
         ptr = pointer_lookup(task, log_path)

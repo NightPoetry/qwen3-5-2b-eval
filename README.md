@@ -81,8 +81,9 @@ export LLM_API_URL="http://<IP>:1234/v1/chat/completions"
     │   │   ├── app.py                — Flask 后端（会话管理/光标续入）
     │   │   ├── graph.html            — 3D 知识图谱可视化（Three.js）
     │   │   └── index.html            — 聊天界面
-    │   └── test_*.py                 — 引擎测试脚本
-    ├── knowledge_cards/              — v1 知识卡片（JSON 格式，已归档）
+    │   ├── scripts/                   — 测试与运行脚本
+    │   └── _archive/                 — 历史备份（blog节点/v1节点/模板）
+    ├── v1/                           — v1 原型（三层有环图、知识卡片、输出样例）
     └── 交接文档/                      — 开发过程记录
 ```
 
