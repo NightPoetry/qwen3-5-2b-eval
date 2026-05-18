@@ -24,6 +24,15 @@ SYSTEM_CONTINUE = (
 )
 
 
+TASK_WORDS = [
+    "写", "创建", "生成", "开发", "实现", "做一个", "帮我",
+    "修复", "修改", "bug", "报错", "怎么", "如何",
+    "分析", "为什么", "解释", "原因", "区别",
+    "翻译", "translate",
+    "代码", "函数", "组件", "页面", "应用", "网站", "接口",
+    "flex", "css", "html", "js", "python", "rust",
+]
+
 def execute(ctx: dict) -> dict:
     if ctx.get("_chat_response"):
         return ctx
@@ -36,6 +45,10 @@ def execute(ctx: dict) -> dict:
             return ctx
 
     task = ctx.get("task", "")
+
+    if any(w in task.lower() for w in TASK_WORDS):
+        ctx.pop("_domain_routed", None)
+        return ctx
 
     if in_conversation:
         recent = turns[-6:] if len(turns) > 6 else turns
@@ -57,5 +70,5 @@ def execute(ctx: dict) -> dict:
 node = Node(id="890", name="通用对话",
     trigger={"type": "regex", "target": "task",
              "pattern": "[\\u4e00-\\u9fff]"},
-    execute=execute, refs=["Y10"],
+    execute=execute, refs=["Y10", "B00", "C00", "D00"],
     metadata={"category": "chat"})
