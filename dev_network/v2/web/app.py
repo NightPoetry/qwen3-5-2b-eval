@@ -189,9 +189,14 @@ def chat():
     # 保留最近 100 条
     Path(chat_log_path).write_text(json.dumps(chat_log[-100:], ensure_ascii=False))
 
+    turns = result.get("_turns", [])
+    if response_text:
+        turns.append(response_text)
+    turns = turns[-12:]
+
     save = {
         "_cursor": cursor,
-        "_turns": result.get("_turns", []),
+        "_turns": turns,
         "_active_domain": result.get("_active_domain"),
     }
     for key in ("html", "css", "js", "contract", "blog", "theme", "interactions",

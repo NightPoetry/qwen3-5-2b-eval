@@ -6,7 +6,7 @@ from llm import ask
 
 def execute(ctx: dict) -> dict:
     parts = []
-    for field in ["blog", "interactions", "task"]:
+    for field in ["blog", "interactions"]:
         content = str(ctx.get(field, ""))
         if content.strip():
             parts.append(content)
@@ -26,7 +26,6 @@ def execute(ctx: dict) -> dict:
     return ctx
 
 node = Node(id="320", name="事实校准",
-    trigger={"type": "keyword", "target": "task",
-             "keywords": ["博客", "文章", "报告", "介绍", "blog", "论文", "声明"]},
+    trigger={"type": "key_exists", "key": "blog"},
     execute=execute, refs=["Y30"],
     metadata={"source": "校准/system_prompt", "category": "reasoning"})

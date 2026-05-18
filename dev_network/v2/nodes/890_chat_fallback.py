@@ -1,7 +1,4 @@
-"""对话节点：兜底对话 — 纯工作记忆，不依赖聊天历史。
-
-光标定位 + task + 工作记忆 = 足够判断上下文。
-聊天记录由 app.py 存储，只在回忆节点(880)触发时检索。
+"""对话节点：兜底对话 — 用近几轮对话维持连贯。
 """
 import sys; from pathlib import Path; sys.path.insert(0, str(Path(__file__).parent.parent))
 from engine import Node
@@ -14,21 +11,16 @@ TECHNICAL_KEYS = [
 ]
 
 SYSTEM_FIRST = (
-    "你是用户的朋友。自然地回应用户说的话。"
-    "简短、真诚、有温度。一两句话。"
+    "你是用户的朋友。自然地回应用户说的话。\n"
+    "简短、真诚、有温度。一两句话。不要用emoji。\n"
     "如果不确定用户想聊什么，可以友好地问一下。"
 )
 
 SYSTEM_CONTINUE = (
     "你是用户的朋友，你们正在聊天。\n"
-    "根据之前的对话自然地接着聊。不要跳到新话题。\n"
+    "下面给出了最近几轮对话，请根据对话上下文自然地接着聊。\n"
+    "关键：回复要衔接上一句话的意思，不要跳到无关话题。\n"
     "简短、真诚。一两句话。不要用emoji。"
-)
-
-SYSTEM_RECALL = (
-    "你是用户的朋友。用户在回忆之前聊过的内容。\n"
-    "根据下面给出的聊天记录片段，自然地回应用户。\n"
-    "简短、真诚。一两句话。"
 )
 
 
@@ -45,21 +37,16 @@ def execute(ctx: dict) -> dict:
 
     task = ctx.get("task", "")
 
-    recalled = ctx.get("_recalled")
-    if recalled and recalled.get("found"):
-        context_str = "\n".join(recalled.get("chunks", [])[-6:])
-        prompt = f"聊天记录片段：\n{context_str}\n\n用户现在说：{task}"
-        system = SYSTEM_RECALL
-    elif in_conversation:
-        # 利用光标位置来判断上下文方向，但不带聊天历史
-        cursor = ctx.get("_cursor", [])
-        cursor_hint = ""
-        if cursor:
-            cursor_hint = f"（你们刚才的话题方向是：{'→'.join(cursor[-3:])}）\n"
-        prompt = f"{cursor_hint}用户说：{task}"
+    if in_conversation:
+        recent = turns[-6:] if len(turns) > 6 else turns
+        history_lines = []
+        for i, t in enumerate(recent):
+            role = "用户" if i % 2 == 0 or i == len(recent) - 1 else "你"
+            history_lines.append(f"{role}：{t}")
+        prompt = "\n".join(history_lines)
         system = SYSTEM_CONTINUE
     else:
-        prompt = task
+        prompt = f"用户：{task}"
         system = SYSTEM_FIRST
 
     resp = ask(system, prompt, temperature=0.7, max_tokens=100).strip()

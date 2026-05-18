@@ -121,6 +121,7 @@ class Engine:
 
         cursor = context.pop("_cursor", [])
         active_domain = context.pop("_active_domain", None)
+        context.pop("_domain_routed", None)
         resumed = False
         resume_reason = "entry"
 
@@ -139,9 +140,11 @@ class Engine:
                     if not ref_node or not self.check_trigger(ref_node, context):
                         continue
                     t = ref_node.trigger.get("type", "")
+                    if t == "always":
+                        continue
                     if t in ("keyword", "key_exists", "condition") and not keyword_match:
                         keyword_match = (ref_id, cursor_id)
-                    elif not fallback_match:
+                    elif t == "regex" and not fallback_match:
                         fallback_match = (ref_id, cursor_id)
             best = keyword_match or fallback_match
             if best:
