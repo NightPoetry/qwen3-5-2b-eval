@@ -1,0 +1,39 @@
+{
+  "id": "004",
+  "name": "禁用emoji字符",
+  "source": "UI设计/跨系统视觉一致性",
+  "phase": "html_css_validation",
+  "trigger": {
+    "type": "regex",
+    "pattern": "[\\U0001F300-\\U0001FAFF\\U00002600-\\U000027BF\\U0001F000-\\U0001F6FF]",
+    "description": "HTML/CSS/JS中出现emoji字符"
+  },
+  "steps": [
+    {
+      "actor": "system",
+      "action": "regex_find",
+      "input": "生成的HTML/CSS/JS文件",
+      "output": "所有emoji字符及其位置"
+    },
+    {
+      "actor": "system",
+      "action": "classify",
+      "input": "emoji字符",
+      "output": "类型判断",
+      "rules": [
+        "状态指示（🔴🟢） → 替换为CSS圆点: border-radius:50%; background:color",
+        "图标（📦🎬） → 替换为文字描述或移除",
+        "装饰（✨🎉） → 直接移除"
+      ]
+    },
+    {
+      "actor": "system",
+      "action": "replace_or_remove",
+      "input": "emoji及替换策略",
+      "output": "替换后的文件内容"
+    }
+  ],
+  "exception": "BMP字符如 × ✓ ± 是跨系统稳定的Unicode数学符号，可保留",
+  "model_involvement": "none",
+  "deterministic": true
+}

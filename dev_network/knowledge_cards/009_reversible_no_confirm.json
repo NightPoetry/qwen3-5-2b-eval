@@ -1,0 +1,42 @@
+{
+  "id": "009",
+  "name": "可逆操作不弹确认框",
+  "source": "交互设计/反模式",
+  "phase": "js_generation",
+  "trigger": {
+    "type": "keyword",
+    "keywords": ["confirm(", "确认", "window.confirm"],
+    "description": "JS中出现confirm()调用"
+  },
+  "steps": [
+    {
+      "actor": "system",
+      "action": "detect_confirm",
+      "input": "JS文件内容",
+      "output": "所有confirm()调用及上下文"
+    },
+    {
+      "actor": "system",
+      "action": "classify_reversibility",
+      "input": "confirm上下文中的操作",
+      "output": "可逆/不可逆",
+      "rules": [
+        "删除列表项(有localStorage备份) → 可逆 → 移除confirm",
+        "标记完成/取消 → 可逆 → 移除confirm",
+        "清空全部数据 → 不可逆 → 保留confirm",
+        "提交到服务端 → 不可逆 → 保留confirm"
+      ]
+    },
+    {
+      "actor": "system",
+      "action": "remove_confirm",
+      "input": "可逆操作中的confirm",
+      "output": "移除confirm，直接执行操作",
+      "condition": "reversibility == '可逆'"
+    }
+  ],
+  "principle": "直接执行 + 撤销支持 > 确认框。确认框打断心流，用户养成无脑点确认的习惯。",
+  "refs": ["003", "006"],
+  "model_involvement": "none",
+  "deterministic": true
+}

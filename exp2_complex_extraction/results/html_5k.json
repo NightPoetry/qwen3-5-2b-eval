@@ -1,0 +1,82 @@
+{
+  "task": "html_headings",
+  "size": "5k",
+  "text_length": 5003,
+  "ground_truth": [
+    {
+      "level": 1,
+      "text": "License"
+    },
+    {
+      "level": 2,
+      "text": "Usage"
+    },
+    {
+      "level": 3,
+      "text": "Authentication"
+    },
+    {
+      "level": 3,
+      "text": "Appendix"
+    },
+    {
+      "level": 2,
+      "text": "Changelog"
+    },
+    {
+      "level": 3,
+      "text": "Security"
+    },
+    {
+      "level": 3,
+      "text": "Data Model"
+    },
+    {
+      "level": 2,
+      "text": "Troubleshooting"
+    },
+    {
+      "level": 3,
+      "text": "Contributing"
+    },
+    {
+      "level": 2,
+      "text": "Architecture"
+    },
+    {
+      "level": 3,
+      "text": "Overview"
+    },
+    {
+      "level": 2,
+      "text": "FAQ"
+    },
+    {
+      "level": 3,
+      "text": "Testing"
+    },
+    {
+      "level": 3,
+      "text": "API Reference"
+    },
+    {
+      "level": 4,
+      "text": "Performance"
+    },
+    {
+      "level": 4,
+      "text": "Getting Started"
+    }
+  ],
+  "conditions": {
+    "A": {
+      "skipped": true
+    },
+    "B": {
+      "skipped": true
+    },
+    "C": {
+      "skipped": true
+    }
+  }
+}

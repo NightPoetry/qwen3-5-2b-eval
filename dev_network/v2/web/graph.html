@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Knowledge Network — 3D Graph</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #050510;
+  --surface: #0c0c1a;
+  --border: #1a1a2e;
+  --text: #e0e0e8;
+  --text-dim: #606078;
+  --accent: #6c8cff;
+}
+body {
+  font-family: -apple-system, "SF Pro Text", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  overflow: hidden;
+}
+#graphContainer {
+  flex: 1;
+  position: relative;
+  cursor: grab;
+}
+#graphContainer:active { cursor: grabbing; }
+canvas { display: block; }
+#tooltip {
+  position: absolute;
+  padding: 6px 12px;
+  background: rgba(12,12,26,0.92);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--text);
+  pointer-events: none;
+  display: none;
+  white-space: nowrap;
+  z-index: 10;
+}
+.chat-panel {
+  width: 340px;
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  flex-shrink: 0;
+}
+.chat-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.chat-header h3 { font-size: 13px; font-weight: 600; color: var(--accent); }
+.chat-header a { font-size: 11px; color: var(--text-dim); text-decoration: none; }
+.chat-header a:hover { color: var(--text); }
+.chat-msgs {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.chat-msgs::-webkit-scrollbar { width: 3px; }
+.chat-msgs::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.chat-msg {
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  animation: fadeIn 0.2s;
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } }
+.chat-msg.user {
+  background: var(--accent); color: #fff;
+  align-self: flex-end; max-width: 85%;
+  border-bottom-right-radius: 3px;
+}
+.chat-msg.assistant {
+  background: #1a1a2e; color: var(--text);
+  align-self: flex-start; max-width: 90%;
+  border-bottom-left-radius: 3px;
+}
+.chat-msg.system {
+  font-size: 11px; color: var(--text-dim);
+  text-align: center; align-self: center; background: none;
+}
+.chat-input {
+  padding: 12px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+}
+.chat-input textarea {
+  flex: 1; background: #12121e;
+  border: 1px solid var(--border); border-radius: 8px;
+  color: var(--text); font-size: 13px; font-family: inherit;
+  padding: 8px 10px; resize: none;
+  min-height: 36px; max-height: 80px; outline: none;
+}
+.chat-input textarea:focus { border-color: var(--accent); }
+.chat-input textarea::placeholder { color: var(--text-dim); }
+.chat-input button {
+  padding: 0 14px; background: var(--accent); color: #fff;
+  border: none; border-radius: 8px;
+  font-size: 12px; font-weight: 600; cursor: pointer;
+}
+.chat-input button:disabled { opacity: 0.4; }
+.legend {
+  position: absolute; bottom: 16px; left: 16px;
+  padding: 10px 14px;
+  background: rgba(12,12,26,0.85);
+  border: 1px solid var(--border); border-radius: 8px;
+  font-size: 11px; color: var(--text-dim);
+  display: flex; flex-direction: column; gap: 4px; z-index: 5;
+}
+.legend-item { display: flex; align-items: center; gap: 6px; }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+.stats {
+  position: absolute; top: 16px; left: 16px;
+  font-size: 11px; color: var(--text-dim); z-index: 5;
+}
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+
+<div id="graphContainer">
+  <div id="tooltip"></div>
+  <div class="stats" id="stats">Loading...</div>
+  <div class="legend">
+    <div class="legend-item"><span class="legend-dot" style="background:#ff9800"></span> 入口</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#1a3050;border:1px solid #2a4a6a"></span> 域抽象</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#4cff88;box-shadow:0 0 6px #4cff88"></span> 活跃</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#00bfff;box-shadow:0 0 4px #00bfff"></span> 长按: 正向BFS</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#ff40ff;box-shadow:0 0 4px #ff40ff"></span> 再按: 反向BFS</div>
+  </div>
+</div>
+
+<div class="chat-panel">
+  <div class="chat-header">
+    <h3>CHAT</h3>
+    <a href="/">← 列表视图</a>
+  </div>
+  <div class="chat-msgs" id="msgs">
+    <div class="chat-msg system">发送消息，观察光束激活节点</div>
+  </div>
+  <div class="chat-input">
+    <textarea id="input" placeholder="说点什么..." rows="1"></textarea>
+    <button id="sendBtn" onclick="sendMsg()">发送</button>
+  </div>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+const container = document.getElementById('graphContainer');
+const tooltip = document.getElementById('tooltip');
+const statsEl = document.getElementById('stats');
+
+const clock = new THREE.Clock();
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x050510);
+scene.fog = new THREE.FogExp2(0x050510, 0.005);
+
+const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 500);
+camera.position.set(0, 35, 85);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.toneMapping = THREE.ReinhardToneMapping;
+renderer.toneMappingExposure = 1.8;
+container.appendChild(renderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+controls.minDistance = 15;
+controls.maxDistance = 200;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 0.2;
+
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const bloomPass = new UnrealBloomPass(
+  new THREE.Vector2(800, 600), 1.5, 0.6, 0.15
+);
+composer.addPass(bloomPass);
+
+const nodeGroup = new THREE.Group();
+const edgeGroup = new THREE.Group();
+const beamGroup = new THREE.Group();
+scene.add(edgeGroup);
+scene.add(nodeGroup);
+scene.add(beamGroup);
+
+const COL = {
+  entry:    new THREE.Color(0xff9800),
+  inactive: new THREE.Color(0x0a1525),
+  active:   new THREE.Color(0x4cff88),
+  chat:     new THREE.Color(0x005a6a),
+  edge:     new THREE.Color(0x0e1a2e),
+  beam:     new THREE.Color(0x4cff88),
+  beamCore: new THREE.Color(0xffffff),
+  impact:   new THREE.Color(0x6fffaa),
+  waveFwd:  new THREE.Color(0x00bfff),
+  waveBwd:  new THREE.Color(0xff40ff),
+  waveFwdCore: new THREE.Color(0x80e8ff),
+  waveBwdCore: new THREE.Color(0xffb0ff),
+  domain:   new THREE.Color(0x1a3050),
+  output:   new THREE.Color(0x2a1a40),
+};
+
+const CATEGORY_OFFSET = {
+  chat: { x: 40, z: -20, y: -5 },
+  reasoning: { x: -35, z: -15, y: 5 },
+  creation: { x: 0, z: 40, y: 0 },
+  domain: { x: 0, z: 0, y: 10 },
+  output: { x: 0, z: 0, y: -10 },
+};
+
+let nodesData = [];
+let edgesData = [];
+let nodeMeshes = new Map();
+let edgeLines = new Map();
+let labelSprites = new Map();
+
+const nodeStates = new Map();
+const impactParticles = [];
+
+function getNodeState(id) {
+  if (!nodeStates.has(id)) {
+    nodeStates.set(id, { energy: 0, hitCount: 0, waveEnergy: 0, waveColor: null });
+  }
+  return nodeStates.get(id);
+}
+
+function createNodeMesh(node, pos) {
+  const isEntry = node.id === '000';
+  const isChat = node.category === 'chat';
+  const isDomain = node.category === 'domain';
+  const isOutput = node.category === 'output';
+  const radius = isEntry ? 1.4 : (isDomain ? 1.0 : (isOutput ? 0.8 : (isChat ? 0.65 : 0.5)));
+  const segments = isDomain || isOutput ? 6 : 24;
+  const geo = isDomain
+    ? new THREE.OctahedronGeometry(radius)
+    : (isOutput ? new THREE.BoxGeometry(radius*1.3, radius*1.3, radius*1.3) : new THREE.SphereGeometry(radius, segments, segments));
+  let baseColor;
+  if (isEntry) baseColor = COL.entry.clone();
+  else if (isDomain) baseColor = COL.domain.clone();
+  else if (isOutput) baseColor = COL.output.clone();
+  else if (isChat) baseColor = COL.chat.clone();
+  else baseColor = COL.inactive.clone();
+  const mat = new THREE.MeshBasicMaterial({ color: baseColor.clone() });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.position.copy(pos);
+  mesh.userData = { node, baseColor, baseRadius: radius };
+  return mesh;
+}
+
+function createLabel(text, pos) {
+  const cvs = document.createElement('canvas');
+  const ctx = cvs.getContext('2d');
+  cvs.width = 256; cvs.height = 48;
+  ctx.font = '20px -apple-system, sans-serif';
+  ctx.fillStyle = 'rgba(180,180,200,0.8)';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const label = text.length > 10 ? text.slice(0, 9) + '…' : text;
+  ctx.fillText(label, 128, 24);
+  const tex = new THREE.CanvasTexture(cvs);
+  tex.minFilter = THREE.LinearFilter;
+  const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, opacity: 0.4 });
+  const sprite = new THREE.Sprite(mat);
+  sprite.position.copy(pos);
+  sprite.position.y -= 1.6;
+  sprite.scale.set(5, 1, 1);
+  return sprite;
+}
+
+function createEdgeLine(from, to) {
+  const geo = new THREE.BufferGeometry().setFromPoints([from, to]);
+  const mat = new THREE.LineBasicMaterial({ color: COL.edge, transparent: true, opacity: 0.18 });
+  return new THREE.Line(geo, mat);
+}
+
+function sphereLayout(nodes, edges) {
+  const pos = new Map();
+
+  const internals = nodes.filter(n => n.id !== '000' && n.category !== 'domain' && n.category !== 'output');
+  const R = Math.max(15, Math.cbrt(internals.length) * 6);
+  const matrixX = R + 14;
+
+  const domainIds = nodes.filter(n => n.category === 'domain').map(n => n.id).sort();
+  const outputIds = nodes.filter(n => n.category === 'output').map(n => n.id).sort();
+
+  function gridPositions(ids, x) {
+    const count = ids.length;
+    const cols = Math.ceil(Math.sqrt(count));
+    const rows = Math.ceil(count / cols);
+    const spacing = 5;
+    const result = {};
+    for (let i = 0; i < count; i++) {
+      const col = i % cols, row = Math.floor(i / cols);
+      result[ids[i]] = {
+        x,
+        y: (row - (rows - 1) / 2) * spacing,
+        z: (col - (cols - 1) / 2) * spacing,
+      };
+    }
+    return result;
+  }
+
+  const domainGrid = gridPositions(domainIds, -matrixX);
+  const outputGrid = gridPositions(outputIds, matrixX);
+
+  nodes.forEach(n => {
+    let p;
+    if (n.id === '000') {
+      p = { x: -matrixX, y: 0, z: 0 };
+    } else if (domainGrid[n.id]) {
+      p = domainGrid[n.id];
+    } else if (outputGrid[n.id]) {
+      p = outputGrid[n.id];
+    } else {
+      const u = Math.random();
+      const r = R * Math.cbrt(u);
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      p = {
+        x: r * Math.sin(phi) * Math.cos(theta),
+        y: r * Math.cos(phi),
+        z: r * Math.sin(phi) * Math.sin(theta),
+      };
+    }
+    pos.set(n.id, p);
+  });
+
+  for (let iter = 0; iter < 80; iter++) {
+    const alpha = 0.25 * (1 - iter / 80);
+    const entries = [...pos.entries()];
+    for (let i = 0; i < entries.length; i++) {
+      const [idA, pa] = entries[i];
+      if (idA === '000' || idA[0] > '9') continue;
+      for (let j = i + 1; j < entries.length; j++) {
+        const [idB, pb] = entries[j];
+        if (idB === '000' || idB[0] > '9') continue;
+        let dx = pa.x - pb.x, dy = pa.y - pb.y, dz = pa.z - pb.z;
+        const dist = Math.max(Math.sqrt(dx*dx + dy*dy + dz*dz), 0.3);
+        if (dist > 12) continue;
+        const f = 50 * alpha / (dist * dist);
+        pa.x += dx/dist * f; pa.y += dy/dist * f; pa.z += dz/dist * f;
+        pb.x -= dx/dist * f; pb.y -= dy/dist * f; pb.z -= dz/dist * f;
+      }
+      const d = Math.sqrt(pa.x*pa.x + pa.y*pa.y + pa.z*pa.z);
+      if (d > R * 1.2) {
+        const pull = (d - R) * 0.05 * alpha;
+        pa.x -= pa.x/d * pull; pa.y -= pa.y/d * pull; pa.z -= pa.z/d * pull;
+      }
+    }
+    for (const [fid, tid] of edges) {
+      const pa = pos.get(fid), pb = pos.get(tid);
+      if (!pa || !pb || fid === '000' || tid === '000' || fid[0] > '9' || tid[0] > '9') continue;
+      const dx = pb.x-pa.x, dy = pb.y-pa.y, dz = pb.z-pa.z;
+      const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+      if (dist < 0.1 || dist > R) continue;
+      const f = dist * 0.004 * alpha;
+      pa.x += dx/dist*f; pa.y += dy/dist*f; pa.z += dz/dist*f;
+      pb.x -= dx/dist*f; pb.y -= dy/dist*f; pb.z -= dz/dist*f;
+    }
+  }
+  return pos;
+}
+
+// ===== Particle Stream System =====
+
+const MAX_P = 4000;
+const pState = new Array(MAX_P);
+const pFree = [];
+for (let i = MAX_P - 1; i >= 0; i--) {
+  pState[i] = { active: false };
+  pFree.push(i);
+}
+const pPositions = new Float32Array(MAX_P * 3);
+const pColors = new Float32Array(MAX_P * 3);
+const pAlphas = new Float32Array(MAX_P);
+const pSizes = new Float32Array(MAX_P);
+
+const pGeo = new THREE.BufferGeometry();
+pGeo.setAttribute('position', new THREE.BufferAttribute(pPositions, 3));
+pGeo.setAttribute('color', new THREE.BufferAttribute(pColors, 3));
+pGeo.setAttribute('aAlpha', new THREE.BufferAttribute(pAlphas, 1));
+pGeo.setAttribute('aSize', new THREE.BufferAttribute(pSizes, 1));
+
+const pMat = new THREE.ShaderMaterial({
+  transparent: true,
+  depthWrite: false,
+  blending: THREE.AdditiveBlending,
+  vertexShader: `
+    attribute vec3 color;
+    attribute float aSize;
+    attribute float aAlpha;
+    varying vec3 vColor;
+    varying float vAlpha;
+    void main() {
+      vColor = color;
+      vAlpha = aAlpha;
+      vec4 mvPos = modelViewMatrix * vec4(position, 1.0);
+      gl_PointSize = clamp(aSize * (250.0 / -mvPos.z), 1.0, 48.0);
+      gl_Position = projectionMatrix * mvPos;
+    }
+  `,
+  fragmentShader: `
+    varying vec3 vColor;
+    varying float vAlpha;
+    void main() {
+      if (vAlpha < 0.001) discard;
+      float d = length(gl_PointCoord - vec2(0.5)) * 2.0;
+      if (d > 1.0) discard;
+      float glow = exp(-d * d * 3.0);
+      gl_FragColor = vec4(vColor, vAlpha * glow);
+    }
+  `
+});
+const pPoints = new THREE.Points(pGeo, pMat);
+beamGroup.add(pPoints);
+
+const activeComets = [];
+const ambientEdges = new Map();
+
+const _dir = new THREE.Vector3();
+const _perp1 = new THREE.Vector3();
+const _perp2 = new THREE.Vector3();
+const _up = new THREE.Vector3(0, 1, 0);
+const _right = new THREE.Vector3(1, 0, 0);
+
+function allocP() { return pFree.length > 0 ? pFree.pop() : -1; }
+function freeP(i) {
+  pState[i].active = false;
+  pPositions[i*3] = 0; pPositions[i*3+1] = 0; pPositions[i*3+2] = 0;
+  pAlphas[i] = 0; pSizes[i] = 0;
+  pFree.push(i);
+}
+
+const cometGeo = new THREE.CylinderGeometry(1, 1, 1, 12, 48, true);
+
+function fireComet(fromPos, toPos, color, coreColor, headSpeed, onArrive) {
+  const dist = fromPos.distanceTo(toPos);
+  const mat = new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    side: THREE.DoubleSide,
+    uniforms: {
+      headT:     { value: 0.001 },
+      fadeT:     { value: 0.0 },
+      baseColor: { value: color.clone() },
+      coreColor: { value: coreColor.clone() },
+      maxRadius: { value: 0.35 },
+    },
+    vertexShader: `
+      uniform float headT;
+      uniform float fadeT;
+      uniform float maxRadius;
+      varying float vLocalT;
+      void main() {
+        float t = position.y + 0.5;
+        float ct = clamp(t, fadeT, headT);
+        float range = max(headT - fadeT, 0.001);
+        float localT = (ct - fadeT) / range;
+        vLocalT = localT;
+        float droplet = pow(localT, 0.5) * (1.0 - pow(localT, 10.0));
+        float radius = maxRadius * droplet;
+        float origR = length(position.xz);
+        vec3 pos = vec3(
+          origR > 0.001 ? position.x / origR * radius : 0.0,
+          ct - 0.5,
+          origR > 0.001 ? position.z / origR * radius : 0.0
+        );
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform vec3 baseColor;
+      uniform vec3 coreColor;
+      varying float vLocalT;
+      void main() {
+        float brightness = pow(vLocalT, 1.2);
+        if (brightness < 0.005) discard;
+        vec3 col = mix(baseColor * 0.25, coreColor, pow(vLocalT, 2.5));
+        gl_FragColor = vec4(col, brightness * 0.85);
+      }
+    `
+  });
+
+  const mesh = new THREE.Mesh(cometGeo, mat);
+  const dir = new THREE.Vector3().subVectors(toPos, fromPos).normalize();
+  mesh.quaternion.setFromUnitVectors(_up, dir);
+  mesh.position.addVectors(fromPos, toPos).multiplyScalar(0.5);
+  mesh.scale.set(1, dist, 1);
+  beamGroup.add(mesh);
+
+  activeComets.push({
+    mesh, mat,
+    headSpeed,
+    fadeSpeed: headSpeed * 0.6,
+    phase: 'extend',
+    onArrive, arrived: false
+  });
+}
+
+function updateComets(dt) {
+  for (let i = activeComets.length - 1; i >= 0; i--) {
+    const c = activeComets[i];
+    const u = c.mat.uniforms;
+    if (c.phase === 'extend') {
+      u.headT.value += c.headSpeed * dt;
+      if (u.headT.value >= 1.0) {
+        u.headT.value = 1.0;
+        c.phase = 'retract';
+        if (!c.arrived) { c.arrived = true; if (c.onArrive) c.onArrive(); }
+      }
+    }
+    if (c.phase === 'retract') {
+      u.fadeT.value += c.fadeSpeed * dt;
+      if (u.fadeT.value >= 1.0) {
+        beamGroup.remove(c.mesh);
+        c.mat.dispose();
+        activeComets.splice(i, 1);
+      }
+    }
+  }
+}
+
+function activateAmbient(fromId, toId, color) {
+  const key = `${fromId}->${toId}`;
+  const existing = ambientEdges.get(key);
+  if (existing) { existing.life = 1.0; return; }
+  const fMesh = nodeMeshes.get(fromId);
+  const tMesh = nodeMeshes.get(toId);
+  if (!fMesh || !tMesh) return;
+  const from = fMesh.position, to = tMesh.position;
+  _dir.subVectors(to, from).normalize();
+  _perp1.crossVectors(_dir, _up);
+  if (_perp1.lengthSq() < 0.01) _perp1.crossVectors(_dir, _right);
+  _perp1.normalize();
+  _perp2.crossVectors(_dir, _perp1).normalize();
+  ambientEdges.set(key, {
+    fx: from.x, fy: from.y, fz: from.z,
+    tx: to.x, ty: to.y, tz: to.z,
+    p1x: _perp1.x, p1y: _perp1.y, p1z: _perp1.z,
+    p2x: _perp2.x, p2y: _perp2.y, p2z: _perp2.z,
+    r: color.r, g: color.g, b: color.b,
+    timer: 0, life: 1.0
+  });
+}
+
+function clearParticles() {
+  for (let i = 0; i < MAX_P; i++) if (pState[i].active) freeP(i);
+  ambientEdges.clear();
+  for (const c of activeComets) {
+    beamGroup.remove(c.mesh);
+    c.mat.dispose();
+  }
+  activeComets.length = 0;
+}
+
+function updateParticles(dt) {
+  for (let i = 0; i < MAX_P; i++) {
+    const p = pState[i];
+    if (!p.active) continue;
+    p.progress += p.speed * dt;
+    if (p.progress >= 1.0) { freeP(i); continue; }
+    if (p.progress < 0) { pAlphas[i] = 0; pSizes[i] = 0; continue; }
+    const t = p.progress;
+    const drift = Math.sin(p.dPhase + t * p.dFreq * Math.PI * 2);
+    pPositions[i*3]   = p.fx + (p.tx - p.fx) * t + p.dx * drift;
+    pPositions[i*3+1] = p.fy + (p.ty - p.fy) * t + p.dy * drift;
+    pPositions[i*3+2] = p.fz + (p.tz - p.fz) * t + p.dz * drift;
+    const fadeIn = Math.min(1, t * 5);
+    const fadeOut = Math.min(1, (1 - t) * 3);
+    pAlphas[i] = p.baseAlpha * fadeIn * fadeOut;
+    pSizes[i] = p.baseSize * (0.5 + 0.5 * Math.sin(t * Math.PI));
+    pColors[i*3] = p.r; pColors[i*3+1] = p.g; pColors[i*3+2] = p.b;
+  }
+
+  for (const [key, e] of ambientEdges) {
+    e.life -= dt * 0.025;
+    if (e.life <= 0) { ambientEdges.delete(key); continue; }
+    e.timer += dt;
+    const interval = 0.3 + (1 - e.life) * 0.7;
+    if (e.timer >= interval) {
+      e.timer -= interval;
+      const idx = allocP();
+      if (idx < 0) continue;
+      const p = pState[idx];
+      p.active = true;
+      p.fx = e.fx; p.fy = e.fy; p.fz = e.fz;
+      p.tx = e.tx; p.ty = e.ty; p.tz = e.tz;
+      p.progress = 0;
+      p.speed = 0.25 + Math.random() * 0.15;
+      const angle = Math.random() * Math.PI * 2;
+      const rad = Math.random() * 0.2;
+      p.dx = (e.p1x * Math.cos(angle) + e.p2x * Math.sin(angle)) * rad;
+      p.dy = (e.p1y * Math.cos(angle) + e.p2y * Math.sin(angle)) * rad;
+      p.dz = (e.p1z * Math.cos(angle) + e.p2z * Math.sin(angle)) * rad;
+      p.dPhase = Math.random() * Math.PI * 2;
+      p.dFreq = 1 + Math.random() * 2;
+      p.r = e.r; p.g = e.g; p.b = e.b;
+      p.baseAlpha = 0.2 * e.life;
+      p.baseSize = 0.8 + Math.random() * 0.6;
+    }
+  }
+
+  pGeo.attributes.position.needsUpdate = true;
+  pGeo.attributes.color.needsUpdate = true;
+  pGeo.attributes.aAlpha.needsUpdate = true;
+  pGeo.attributes.aSize.needsUpdate = true;
+}
+
+function fireBeam(fromId, toId, onArrive) {
+  const fMesh = nodeMeshes.get(fromId);
+  const tMesh = nodeMeshes.get(toId);
+  if (!fMesh || !tMesh) { if (onArrive) onArrive(); return; }
+  const from = fMesh.position, to = tMesh.position;
+  const dist = from.distanceTo(to);
+  fireComet(from, to, COL.beam, COL.beamCore, 1.0 / Math.max(0.3, 0.15 + dist * 0.01), () => {
+    activateAmbient(fromId, toId, COL.beam);
+    if (onArrive) onArrive();
+  });
+}
+
+function fireBeamChain(trace) {
+  if (trace.length === 0) return;
+  hitNode(trace[0].node);
+
+  let step = 0;
+  function next() {
+    step++;
+    if (step >= trace.length) return;
+    const fromId = trace[step - 1].node;
+    const toId = trace[step].node;
+    fireBeam(fromId, toId, () => {
+      hitNode(toId);
+      setTimeout(next, 80);
+    });
+  }
+  if (trace.length > 1) {
+    setTimeout(next, 200);
+  }
+}
+
+function hitNode(id) {
+  const state = getNodeState(id);
+  state.hitCount++;
+  state.energy = 1.0;
+  spawnImpact(id);
+}
+
+function spawnImpact(id) {
+  const mesh = nodeMeshes.get(id);
+  if (!mesh) return;
+  const pos = mesh.position;
+  const count = 12;
+  for (let i = 0; i < count; i++) {
+    const p = new THREE.Mesh(
+      new THREE.SphereGeometry(0.08, 4, 4),
+      new THREE.MeshBasicMaterial({ color: COL.impact, transparent: true, opacity: 1 })
+    );
+    p.position.copy(pos);
+    const dir = new THREE.Vector3(
+      (Math.random()-0.5)*2, (Math.random()-0.5)*2, (Math.random()-0.5)*2
+    ).normalize().multiplyScalar(0.15 + Math.random()*0.25);
+    beamGroup.add(p);
+    impactParticles.push({ mesh: p, vel: dir, life: 1.0 });
+  }
+}
+
+
+// ===== Init =====
+
+async function init() {
+  const res = await fetch('/api/nodes');
+  const data = await res.json();
+  nodesData = data.nodes;
+
+  edgesData = [];
+  for (const n of nodesData) {
+    for (const ref of n.refs) edgesData.push([n.id, ref]);
+  }
+  statsEl.textContent = `${data.count} 节点 · ${edgesData.length} 连接`;
+
+  const positions = sphereLayout(nodesData, edgesData);
+
+  for (const n of nodesData) {
+    const p = positions.get(n.id);
+    const pos = new THREE.Vector3(p.x, p.y, p.z);
+    const mesh = createNodeMesh(n, pos);
+    nodeGroup.add(mesh);
+    nodeMeshes.set(n.id, mesh);
+    const label = createLabel(`${n.id} ${n.name}`, pos);
+    nodeGroup.add(label);
+    labelSprites.set(n.id, label);
+    getNodeState(n.id);
+  }
+
+  for (const [fid, tid] of edgesData) {
+    const fm = nodeMeshes.get(fid), tm = nodeMeshes.get(tid);
+    if (!fm || !tm) continue;
+    const line = createEdgeLine(fm.position, tm.position);
+    line.userData = { from: fid, to: tid };
+    edgeGroup.add(line);
+    const key = `${fid}->${tid}`;
+    edgeLines.set(key, line);
+  }
+
+  buildAdjMaps();
+  resize();
+  animate();
+}
+
+// ===== Main loop =====
+
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = Math.min(clock.getDelta(), 0.05);
+
+  // Node energy + wave decay
+  for (const [id, state] of nodeStates) {
+    const hasActivity = state.energy > 0.001 || state.hitCount > 0 || state.waveEnergy > 0.001;
+    if (!hasActivity) continue;
+
+    const baseline = Math.min(0.25, state.hitCount * 0.025);
+    state.energy = baseline + (state.energy - baseline) * Math.pow(0.15, dt);
+    state.waveEnergy *= Math.pow(0.08, dt);
+    if (state.waveEnergy < 0.001) state.waveEnergy = 0;
+
+    const mesh = nodeMeshes.get(id);
+    if (!mesh) continue;
+    const e = state.energy;
+    const w = state.waveEnergy;
+    const base = mesh.userData.baseColor;
+    const c = base.clone().lerp(COL.active, e);
+    if (w > 0 && state.waveColor) c.lerp(state.waveColor, w * 0.7);
+    mesh.material.color.copy(c);
+    mesh.scale.setScalar(1 + e * 0.6 + w * 0.35);
+
+    const label = labelSprites.get(id);
+    if (label) label.material.opacity = 0.3 + Math.max(e, w) * 0.7;
+  }
+
+  // Edge glow based on connected node energy + wave
+  for (const [key, line] of edgeLines) {
+    const fs = getNodeState(line.userData.from);
+    const ts = getNodeState(line.userData.to);
+    const e = Math.max(fs.energy, ts.energy) * 0.6;
+    const w = Math.min(fs.waveEnergy, ts.waveEnergy) * 0.8;
+    const total = Math.max(e, w);
+    line.material.opacity = 0.06 + total * 0.5;
+    const wc = (fs.waveColor || ts.waveColor);
+    const ec = COL.edge.clone().lerp(COL.beam, e);
+    if (w > e && wc) ec.lerp(wc, w * 0.6);
+    line.material.color.copy(ec);
+  }
+
+  updateParticles(dt);
+  updateComets(dt);
+
+  // Impact particles
+  for (let i = impactParticles.length - 1; i >= 0; i--) {
+    const p = impactParticles[i];
+    p.mesh.position.x += p.vel.x;
+    p.mesh.position.y += p.vel.y;
+    p.mesh.position.z += p.vel.z;
+    p.vel.multiplyScalar(0.93);
+    p.life -= dt * 2.5;
+    p.mesh.material.opacity = Math.max(0, p.life);
+    p.mesh.scale.setScalar(Math.max(0.01, p.life * 0.8));
+    if (p.life <= 0) {
+      beamGroup.remove(p.mesh);
+      p.mesh.geometry.dispose();
+      p.mesh.material.dispose();
+      impactParticles.splice(i, 1);
+    }
+  }
+
+  controls.update();
+  composer.render();
+}
+
+// ===== Interaction =====
+
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+container.addEventListener('mousemove', e => {
+  const rect = renderer.domElement.getBoundingClientRect();
+  mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+  raycaster.setFromCamera(mouse, camera);
+  const hits = raycaster.intersectObjects(nodeGroup.children.filter(c => c.isMesh));
+  if (hits.length > 0) {
+    const nd = hits[0].object.userData.node;
+    const st = getNodeState(nd.id);
+    tooltip.style.display = 'block';
+    tooltip.style.left = (e.clientX - container.getBoundingClientRect().left + 14) + 'px';
+    tooltip.style.top = (e.clientY - container.getBoundingClientRect().top - 12) + 'px';
+    const kw = nd.trigger.keywords ? nd.trigger.keywords.slice(0, 4).join(', ') : nd.trigger.type;
+    tooltip.textContent = `[${nd.id}] ${nd.name} — ${kw} (激活 ${st.hitCount} 次)`;
+  } else {
+    tooltip.style.display = 'none';
+  }
+});
+
+// ===== BFS Wave System =====
+
+const fwdAdj = new Map();
+const bwdAdj = new Map();
+let lastWaveNode = null;
+let lastWaveMode = null;
+let pressTimer = null;
+let pressStart = null;
+let pressMoved = false;
+let wavePhase = null;
+
+function fireWaveBeam(fromId, toId, color, coreColor, onArrive) {
+  const fMesh = nodeMeshes.get(fromId);
+  const tMesh = nodeMeshes.get(toId);
+  if (!fMesh || !tMesh) { if (onArrive) onArrive(); return; }
+  const from = fMesh.position, to = tMesh.position;
+  const dist = from.distanceTo(to);
+  fireComet(from, to, color, coreColor, 1.0 / Math.max(0.4, 0.25 + dist * 0.015), () => {
+    activateAmbient(fromId, toId, color);
+    if (onArrive) onArrive();
+  });
+}
+
+function buildAdjMaps() {
+  for (const n of nodesData) {
+    if (!fwdAdj.has(n.id)) fwdAdj.set(n.id, []);
+    for (const ref of n.refs) {
+      fwdAdj.get(n.id).push(ref);
+      if (!bwdAdj.has(ref)) bwdAdj.set(ref, []);
+      bwdAdj.get(ref).push(n.id);
+    }
+  }
+}
+
+function bfsWave(startId, direction) {
+  // Clear previous wave
+  if (wavePhase) { wavePhase.cancelled = true; wavePhase = null; }
+  for (const [, st] of nodeStates) { st.waveEnergy = 0; st.waveColor = null; }
+  clearParticles();
+
+  const adj = direction === 'fwd' ? fwdAdj : bwdAdj;
+  const waveColor = direction === 'fwd' ? COL.waveFwd : COL.waveBwd;
+  const coreColor = direction === 'fwd' ? COL.waveFwdCore : COL.waveBwdCore;
+  const visited = new Set([startId]);
+  const queue = [{ id: startId, depth: 0 }];
+  const levels = [];
+  // edges[fromDepth] = [[fromId, toId], ...]
+  const edges = [];
+
+  while (queue.length > 0) {
+    const { id, depth } = queue.shift();
+    if (!levels[depth]) levels[depth] = [];
+    levels[depth].push(id);
+    const neighbors = adj.get(id) || [];
+    for (const nid of neighbors) {
+      if (!visited.has(nid) && nodeMeshes.has(nid)) {
+        visited.add(nid);
+        queue.push({ id: nid, depth: depth + 1 });
+        if (!edges[depth]) edges[depth] = [];
+        edges[depth].push([id, nid]);
+      }
+    }
+  }
+
+  const maxDepth = levels.length;
+  const phase = { cancelled: false };
+  wavePhase = phase;
+
+  // First light up the start node
+  const st = getNodeState(startId);
+  st.waveEnergy = 1.0;
+  st.waveColor = waveColor;
+  hitNode(startId);
+
+  // Fire beams level by level with delays
+  let depth = 0;
+  function fireLevel() {
+    if (phase.cancelled || depth >= edges.length) {
+      wavePhase = null;
+      return;
+    }
+    const levelEdges = edges[depth];
+    let completed = 0;
+    const total = levelEdges ? levelEdges.length : 0;
+
+    if (total === 0) {
+      depth++;
+      setTimeout(fireLevel, 200);
+      return;
+    }
+
+    for (const [fid, tid] of levelEdges) {
+      fireWaveBeam(fid, tid, waveColor, coreColor, () => {
+        const tst = getNodeState(tid);
+        tst.waveEnergy = 1.0 - (depth + 1) / (maxDepth + 1) * 0.35;
+        tst.waveColor = waveColor;
+        completed++;
+        if (completed >= total) {
+          depth++;
+          setTimeout(fireLevel, 350);  // pause between levels
+        }
+      });
+    }
+  }
+  // Small initial delay so the start node lights up first
+  setTimeout(fireLevel, 300);
+}
+
+container.addEventListener('pointerdown', (e) => {
+  pressMoved = false;
+  pressStart = { x: e.clientX, y: e.clientY };
+  pressTimer = setTimeout(() => {
+    if (pressMoved) return;
+    const rect = renderer.domElement.getBoundingClientRect();
+    mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera);
+    const hits = raycaster.intersectObjects(nodeGroup.children.filter(c => c.isMesh));
+    if (hits.length > 0) {
+      const nd = hits[0].object.userData.node;
+      controls.autoRotate = false;
+      if (lastWaveNode === nd.id && lastWaveMode === 'fwd') {
+        bfsWave(nd.id, 'bwd');
+        lastWaveMode = 'bwd';
+      } else {
+        bfsWave(nd.id, 'fwd');
+        lastWaveNode = nd.id;
+        lastWaveMode = 'fwd';
+      }
+    }
+  }, 500);
+});
+container.addEventListener('pointermove', (e) => {
+  if (pressStart) {
+    const dx = e.clientX - pressStart.x, dy = e.clientY - pressStart.y;
+    if (dx * dx + dy * dy > 25) pressMoved = true;
+  }
+});
+container.addEventListener('pointerup', () => {
+  clearTimeout(pressTimer);
+  pressStart = null;
+});
+
+function resize() {
+  const w = container.clientWidth, h = container.clientHeight;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+  composer.setSize(w, h);
+  bloomPass.resolution.set(w, h);
+}
+window.addEventListener('resize', resize);
+
+window.activateGraphNodes = function(trace) { fireBeamChain(trace); };
+init();
+</script>
+
+<script>
+let sessionId = crypto.randomUUID();
+let sending = false;
+
+async function sendMsg() {
+  const input = document.getElementById('input');
+  const msg = input.value.trim();
+  if (!msg || sending) return;
+  sending = true;
+  document.getElementById('sendBtn').disabled = true;
+  input.value = '';
+  appendMsg('user', msg);
+  const thinkEl = appendMsg('system', '节点图执行中...');
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: msg, session_id: sessionId }),
+    });
+    const data = await res.json();
+    thinkEl.remove();
+    if (data.error) {
+      appendMsg('system', '错误: ' + data.error);
+    } else {
+      appendMsg('assistant', data.response);
+      const traceText = data.trace.map(t => `[${t.node}] ${t.name}`).join(' → ');
+      appendMsg('system', traceText + ` (${data.elapsed}s)`);
+      if (window.activateGraphNodes) window.activateGraphNodes(data.trace);
+    }
+  } catch (e) {
+    thinkEl.remove();
+    appendMsg('system', '网络错误');
+  }
+  sending = false;
+  document.getElementById('sendBtn').disabled = false;
+  input.focus();
+}
+
+function appendMsg(role, text) {
+  const msgs = document.getElementById('msgs');
+  const el = document.createElement('div');
+  el.className = 'chat-msg ' + role;
+  el.textContent = text;
+  msgs.appendChild(el);
+  msgs.scrollTop = msgs.scrollHeight;
+  return el;
+}
+
+document.getElementById('input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+});
+</script>
+</body>
+</html>

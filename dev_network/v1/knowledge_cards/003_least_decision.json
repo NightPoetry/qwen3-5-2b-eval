@@ -1,0 +1,51 @@
+{
+  "id": "003",
+  "name": "最少决定原则",
+  "source": "交互设计/最少决定",
+  "phase": "phase0_post",
+  "trigger": {
+    "type": "count",
+    "description": "Phase0交互设计完成后，数用户决定点数量"
+  },
+  "steps": [
+    {
+      "actor": "system",
+      "action": "parse_interactions",
+      "input": "Phase0交互设计输出",
+      "output": "交互动作列表，标注每个是[输入/选择/确认/浏览]"
+    },
+    {
+      "actor": "model",
+      "action": "classify_urgency",
+      "input": "单个用户动作",
+      "output": "必须立即 / 可以之后",
+      "prompt_template": "这个操作必须在创建时做吗？还是可以之后修改？只回答：立即 或 之后",
+      "constraint": "一次只问一个动作"
+    },
+    {
+      "actor": "system",
+      "action": "defer",
+      "input": "标记为'之后'的动作",
+      "output": "从创建流程移到属性面板/设置区",
+      "condition": "classify == '之后'"
+    },
+    {
+      "actor": "model",
+      "action": "find_default",
+      "input": "保留的每个输入字段",
+      "output": "一个最常见默认值",
+      "prompt_template": "这个字段最常见的值是什么？用一个词回答",
+      "constraint": "一次只问一个字段"
+    },
+    {
+      "actor": "system",
+      "action": "set_default",
+      "input": "字段+默认值",
+      "output": "更新契约中该字段的default属性"
+    }
+  ],
+  "model_involvement": "minimal",
+  "deterministic": false,
+  "refs": ["006", "009"],
+  "principle": "每次要求用户做决定都是消耗。压缩方法：合并、默认、延迟。"
+}

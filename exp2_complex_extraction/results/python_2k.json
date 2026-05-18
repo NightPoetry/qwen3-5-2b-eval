@@ -1,0 +1,46 @@
+{
+  "task": "python_functions",
+  "size": "2k",
+  "text_length": 5535,
+  "ground_truth": [
+    "authorize_request",
+    "cleanup_resources",
+    "deserialize_response",
+    "filter_outliers",
+    "generate_report",
+    "invalidate_cache",
+    "merge_branches",
+    "send_alert"
+  ],
+  "conditions": {
+    "A": {
+      "condition": "A",
+      "found": [
+        "filter_outliers",
+        "send_alert",
+        "deserialize_response",
+        "merge_branches",
+        "invalidate_cache",
+        "generate_report",
+        "cleanup_resources",
+        "authorize_request"
+      ],
+      "rounds": 1,
+      "tool_calls": 0,
+      "elapsed_s": 10.71,
+      "raw_response": "Based on the provided Python source file, here are the top-level functions defined at module scope. These are functions that are not nested within any class (like `DataProcessor` or `EventBus`) and do not define their own classes. They include helper functions like `_inner`, `_reducer`, `_helper`, etc., as well as the main utility functions.\n\nThe list includes:\n1.  `filter_outliers(data, verbose=False)`\n2.  `send_alert(data, config=None)`\n3.  `deserialize_response(data, verbose=False)`\n4.  `merge_branches(data)`\n5.  `invalidate_cache(data)`\n6.  `generate_report(data, config=None)`\n7.  `cleanup_resources(data, verbose=False)`\n8.  `authorize_request(data, verbose=False)`\n\n```json\n[\"filter_outliers\", \"send_alert\", \"deserialize_response\", \"merge_branches\", \"invalidate_cache\", \"generate_report\", \"cleanup_resources\", \"authorize_request\"]\n```",
+      "metrics": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 8,
+        "fp": 0,
+        "fn": 0,
+        "ground_truth_count": 8,
+        "found_count": 8,
+        "missed": [],
+        "spurious": []
+      }
+    }
+  }
+}

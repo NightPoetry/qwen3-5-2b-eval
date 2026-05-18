@@ -1,0 +1,28 @@
+{
+  "task": "minified_python",
+  "size": "2k",
+  "text_length": 2002,
+  "ground_truth": [
+    "authenticate",
+    "authorize_request",
+    "cleanup_resources",
+    "compress_data",
+    "deserialize_response",
+    "filter_outliers",
+    "generate_report",
+    "invalidate_cache",
+    "merge_branches",
+    "send_alert"
+  ],
+  "conditions": {
+    "A": {
+      "skipped": true
+    },
+    "B": {
+      "skipped": true
+    },
+    "C": {
+      "skipped": true
+    }
+  }
+}

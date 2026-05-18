@@ -1,0 +1,67 @@
+{
+  "task": "python_functions",
+  "size": "5k",
+  "text_length": 8034,
+  "ground_truth": [
+    "authenticate",
+    "authorize_request",
+    "cancel_task",
+    "cleanup_resources",
+    "compress_data",
+    "deserialize_response",
+    "filter_outliers",
+    "generate_report",
+    "invalidate_cache",
+    "merge_branches",
+    "send_alert",
+    "serialize_payload"
+  ],
+  "conditions": {
+    "A": {
+      "condition": "A",
+      "found": [
+        "filter_outliers",
+        "send_alert",
+        "deserialize_response",
+        "merge_branches",
+        "invalidate_cache",
+        "generate_report",
+        "rebase_commits",
+        "process_batch",
+        "log_event",
+        "cleanup_resources",
+        "authorize_request",
+        "authenticate",
+        "compress_data",
+        "aggregate_stats",
+        "validate_schema",
+        "transform_matrix",
+        "serialize_payload",
+        "cancel_task"
+      ],
+      "rounds": 1,
+      "tool_calls": 0,
+      "elapsed_s": 17.94,
+      "raw_response": "Based on the provided Python source file, here are the top-level functions defined at module scope. These are functions that are directly accessible from the global namespace without being inside any class or another function definition.\n\nThe following functions appear in the code:\n1.  `filter_outliers` (defined after the initial docstring)\n2.  `send_alert`\n3.  `deserialize_response`\n4.  `merge_branches`\n5.  `invalidate_cache`\n6.  `generate_report`\n7.  `rebase_commits`\n8.  `process_batch`\n9.  `log_event`\n10. `cleanup_resources`\n11. `authorize_request`\n12. `authenticate`\n13. `compress_data`\n14. `aggregate_stats`\n15. `validate_schema`\n16. `transform_matrix`\n17. `serialize_payload`\n18. `cancel_task`\n\nNote: Functions like `__init__`, `restore_backup`, `cache_result`, `extract_features`, and the helper functions `_helper`, `_validator`, `_builder`, `_reducer` are not included because they belong to classes (`DataProcessor`, `EventBus`, `ConfigManager`) or are defined within other functions, respectively.\n\n```json\n[\"filter_outliers\", \"send_alert\", \"deserialize_response\", \"merge_branches\", \"invalidate_cache\", \"generate_report\", \"rebase_commits\", \"process_batch\", \"log_event\", \"cleanup_resources\", \"authorize_request\", \"authenticate\", \"compress_data\", \"aggregate_stats\", \"validate_schema\", \"transform_matrix\", \"serialize_payload\", \"cancel_task\"]\n```",
+      "metrics": {
+        "precision": 0.6667,
+        "recall": 1.0,
+        "f1": 0.8,
+        "tp": 12,
+        "fp": 6,
+        "fn": 0,
+        "ground_truth_count": 12,
+        "found_count": 18,
+        "missed": [],
+        "spurious": [
+          "aggregate_stats",
+          "log_event",
+          "process_batch",
+          "rebase_commits",
+          "transform_matrix",
+          "validate_schema"
+        ]
+      }
+    }
+  }
+}

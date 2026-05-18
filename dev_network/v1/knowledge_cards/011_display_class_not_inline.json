@@ -1,0 +1,29 @@
+{
+  "id": "011",
+  "name": "显隐用class不用inline style",
+  "source": "UI设计/语义一致",
+  "phase": "js_validation",
+  "trigger": {
+    "type": "regex",
+    "pattern": "\\.style\\.display\\s*=",
+    "description": "JS中直接设置style.display"
+  },
+  "steps": [
+    {
+      "actor": "system",
+      "action": "detect_inline_display",
+      "input": "JS文件",
+      "output": "所有 .style.display = 'none'/'block' 调用"
+    },
+    {
+      "actor": "system",
+      "action": "replace_with_classlist",
+      "input": "inline display设置",
+      "output": "替换为 classList.add('hidden')/classList.remove('hidden')",
+      "css_required": ".hidden { display: none; }"
+    }
+  ],
+  "reason": "inline style优先级最高，难以被CSS覆盖；class方式可在CSS层统一管理显隐动画",
+  "model_involvement": "none",
+  "deterministic": true
+}

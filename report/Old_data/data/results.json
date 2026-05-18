@@ -1,66 +1,127 @@
 {
   "meta": {
     "model": "qwen3.5-2b",
-    "server": "192.168.3.181:1234 (LM Studio 0.4.12 Build1)",
+    "server": "localhost:1234 (LM Studio 0.4.12 Build1)",
     "temperature": 0.1,
     "date": "2026-05-16",
     "note": "All experiments use OpenAI-compatible API via LM Studio default configuration"
   },
-
   "exp1_needle_in_haystack": {
     "description": "Hide the word BLUEBERRY at different positions in ~2000-word filler text. Ask model to find it.",
     "context_words": 2005,
     "needle": "THE SECRET WORD IS: BLUEBERRY",
     "mode": "no_think (/no_think prefix)",
     "results": [
-      {"position": "10%", "answer": "BLUEBERRY", "pass": true},
-      {"position": "25%", "answer": "BLUEBERRY", "pass": true},
-      {"position": "50%", "answer": "BLUEBERRY", "pass": true},
-      {"position": "75%", "answer": "BLUEBERRY", "pass": true},
-      {"position": "90%", "answer": "BLUEBERRY", "pass": true}
+      {
+        "position": "10%",
+        "answer": "BLUEBERRY",
+        "pass": true
+      },
+      {
+        "position": "25%",
+        "answer": "BLUEBERRY",
+        "pass": true
+      },
+      {
+        "position": "50%",
+        "answer": "BLUEBERRY",
+        "pass": true
+      },
+      {
+        "position": "75%",
+        "answer": "BLUEBERRY",
+        "pass": true
+      },
+      {
+        "position": "90%",
+        "answer": "BLUEBERRY",
+        "pass": true
+      }
     ],
     "score": "5/5",
     "score_pct": 100
   },
-
   "exp2_reasoning_retrieval": {
     "description": "Rule embedded in long text defines what to find. Model must reason to identify the correct word.",
     "context_words": 2040,
     "cases": [
       {
         "name": "Prime number among a list",
-        "rule_pos": "15%", "target_pos": "75%",
+        "rule_pos": "15%",
+        "target_pos": "75%",
         "expected": "23",
-        "no_think": {"answer": "13", "pass": false, "note": "Hallucinated a prime not in the text"},
-        "with_think": {"answer": "23", "pass": true, "reasoning_chars": 1453}
+        "no_think": {
+          "answer": "13",
+          "pass": false,
+          "note": "Hallucinated a prime not in the text"
+        },
+        "with_think": {
+          "answer": "23",
+          "pass": true,
+          "reasoning_chars": 1453
+        }
       },
       {
         "name": "Only South American country",
-        "rule_pos": "80%", "target_pos": "20%",
+        "rule_pos": "80%",
+        "target_pos": "20%",
         "expected": "Brazil",
-        "no_think": {"answer": "Brazil", "pass": true},
-        "with_think": {"answer": "Brazil", "pass": true, "reasoning_chars": 1430}
+        "no_think": {
+          "answer": "Brazil",
+          "pass": true
+        },
+        "with_think": {
+          "answer": "Brazil",
+          "pass": true,
+          "reasoning_chars": 1430
+        }
       },
       {
         "name": "Only mammal in animal list",
-        "rule_pos": "40%", "target_pos": "60%",
+        "rule_pos": "40%",
+        "target_pos": "60%",
         "expected": "hedgehog",
-        "no_think": {"answer": "The golden eagle", "pass": false, "note": "Misclassified bird as mammal"},
-        "with_think": {"answer": "European hedgehog", "pass": true, "reasoning_chars": 1200}
+        "no_think": {
+          "answer": "The golden eagle",
+          "pass": false,
+          "note": "Misclassified bird as mammal"
+        },
+        "with_think": {
+          "answer": "European hedgehog",
+          "pass": true,
+          "reasoning_chars": 1200
+        }
       },
       {
         "name": "Only odd number",
-        "rule_pos": "10%", "target_pos": "90%",
+        "rule_pos": "10%",
+        "target_pos": "90%",
         "expected": "37",
-        "no_think": {"answer": "200", "pass": false, "note": "200 is even — severe failure"},
-        "with_think": {"answer": "37", "pass": true, "reasoning_chars": 844}
+        "no_think": {
+          "answer": "200",
+          "pass": false,
+          "note": "200 is even — severe failure"
+        },
+        "with_think": {
+          "answer": "37",
+          "pass": true,
+          "reasoning_chars": 844
+        }
       },
       {
         "name": "Only planet in word list",
-        "rule_pos": "50%", "target_pos": "51%",
+        "rule_pos": "50%",
+        "target_pos": "51%",
         "expected": "Saturn",
-        "no_think": {"answer": "Saturn", "pass": true},
-        "with_think": {"answer": "Saturn", "pass": true, "reasoning_chars": 6833}
+        "no_think": {
+          "answer": "Saturn",
+          "pass": true
+        },
+        "with_think": {
+          "answer": "Saturn",
+          "pass": true,
+          "reasoning_chars": 6833
+        }
       }
     ],
     "no_think_score": "2/5",
@@ -68,28 +129,72 @@
     "with_think_score": "5/5",
     "with_think_pct": 100
   },
-
   "exp3_advanced": {
     "description": "Harder problem identification + complete function calling loop",
     "context_words": 2040,
     "part1_problem_id": [
-      {"name": "A. Multi-hop reasoning",         "expected": "87",     "pass": true,  "reasoning": "Identified 'Indian Ocean' (appears once) → RULE-2 → 87"},
-      {"name": "B. Distractor trap",             "expected": "49",     "pass": true,  "reasoning": "35 fails CONDITION-1 (>40), 49 satisfies all three"},
-      {"name": "C. Nested / indirect rule",      "expected": "310",    "pass": true,  "reasoning": "META-RULE ignores ALPHA, follows BETA: smallest number = 310"},
-      {"name": "D. Contradiction override",      "expected": "AURORA", "pass": true,  "reasoning": "FALCON→PHOENIX→AURORA, correctly tracks final state"}
+      {
+        "name": "A. Multi-hop reasoning",
+        "expected": "87",
+        "pass": true,
+        "reasoning": "Identified 'Indian Ocean' (appears once) → RULE-2 → 87"
+      },
+      {
+        "name": "B. Distractor trap",
+        "expected": "49",
+        "pass": true,
+        "reasoning": "35 fails CONDITION-1 (>40), 49 satisfies all three"
+      },
+      {
+        "name": "C. Nested / indirect rule",
+        "expected": "310",
+        "pass": true,
+        "reasoning": "META-RULE ignores ALPHA, follows BETA: smallest number = 310"
+      },
+      {
+        "name": "D. Contradiction override",
+        "expected": "AURORA",
+        "pass": true,
+        "reasoning": "FALCON→PHOENIX→AURORA, correctly tracks final state"
+      }
     ],
     "part2_function_calling": [
-      {"name": "F1. One param extraction",    "expected_fn": "compute_square",    "expected_args": {"n": 17},                                                    "called": "compute_square({'n': 17})",                                    "pass": true},
-      {"name": "F2. Multi-param extraction",  "expected_fn": "register_result",   "expected_args": {"participant_name": "Elena Vasquez", "score": 94},           "called": "register_result({'participant_name': 'Elena Vasquez', 'score': 94})", "pass": true},
-      {"name": "F3. Function selection",      "expected_fn": "translate_document","expected_args": {"source_language": "French", "target_language": "English"}, "called": "translate_document({'source_language': 'French', 'target_language': 'English'})", "pass": true}
+      {
+        "name": "F1. One param extraction",
+        "expected_fn": "compute_square",
+        "expected_args": {
+          "n": 17
+        },
+        "called": "compute_square({'n': 17})",
+        "pass": true
+      },
+      {
+        "name": "F2. Multi-param extraction",
+        "expected_fn": "register_result",
+        "expected_args": {
+          "participant_name": "Elena Vasquez",
+          "score": 94
+        },
+        "called": "register_result({'participant_name': 'Elena Vasquez', 'score': 94})",
+        "pass": true
+      },
+      {
+        "name": "F3. Function selection",
+        "expected_fn": "translate_document",
+        "expected_args": {
+          "source_language": "French",
+          "target_language": "English"
+        },
+        "called": "translate_document({'source_language': 'French', 'target_language': 'English'})",
+        "pass": true
+      }
     ],
     "score": "7/7",
     "score_pct": 100
   },
-
   "exp4_tool_description": {
     "description": "Same 20 math questions, 4 tool description styles. Does the model call the tool or answer itself?",
-    "server": "192.168.3.181:1234",
+    "server": "localhost:1234",
     "styles": {
       "EN-STRONG": {
         "lang": "English",
@@ -113,32 +218,220 @@
       }
     },
     "questions": [
-      {"id":"Q01","type":"A","text":"What is 347 multiplied by 29?",                                                          "EN-STRONG":true, "CN-WEAK":true, "CN-STRONG":true, "CN-PATCHED":true},
-      {"id":"Q02","type":"A","text":"Calculate 1024 divided by 32.",                                                          "EN-STRONG":true, "CN-WEAK":true, "CN-STRONG":true, "CN-PATCHED":true},
-      {"id":"Q03","type":"A","text":"What is 568 plus 437 minus 129?",                                                        "EN-STRONG":true, "CN-WEAK":true, "CN-STRONG":true, "CN-PATCHED":true},
-      {"id":"Q04","type":"A","text":"Compute 75 squared.",                                                                    "EN-STRONG":true, "CN-WEAK":true, "CN-STRONG":true, "CN-PATCHED":true},
-      {"id":"Q05","type":"A","text":"What is 2 to the power of 10?",                                                          "EN-STRONG":true, "CN-WEAK":false,"CN-STRONG":true, "CN-PATCHED":true},
-      {"id":"Q06","type":"B","text":"I buy 14 notebooks at $3.50 each. What is the total cost?",                              "EN-STRONG":true, "CN-WEAK":true, "CN-STRONG":true, "CN-PATCHED":true},
-      {"id":"Q07","type":"B","text":"A farmer harvests 860 kg of wheat per hectare over 7 hectares. Total yield?",            "EN-STRONG":true, "CN-WEAK":true, "CN-STRONG":true, "CN-PATCHED":true},
-      {"id":"Q08","type":"B","text":"A rope is 48.6 meters long and cut into 9 equal pieces. How long is each?",              "EN-STRONG":true, "CN-WEAK":false,"CN-STRONG":true, "CN-PATCHED":true},
-      {"id":"Q09","type":"B","text":"There are 365 days in a year. How many hours is that?",                                  "EN-STRONG":true, "CN-WEAK":false,"CN-STRONG":true, "CN-PATCHED":true},
-      {"id":"Q10","type":"B","text":"A shirt costs $45. It is on sale at 20% off. What is the sale price?",                   "EN-STRONG":false,"CN-WEAK":false,"CN-STRONG":true, "CN-PATCHED":true},
-      {"id":"Q11","type":"C","text":"I have 3 boxes, each containing 128 items. I remove 45 items total. How many remain?",   "EN-STRONG":false,"CN-WEAK":false,"CN-STRONG":true, "CN-PATCHED":true},
-      {"id":"Q12","type":"C","text":"A store sold 200 units at $15 each. Cost of goods was $1800. What is the profit?",       "EN-STRONG":true, "CN-WEAK":false,"CN-STRONG":true, "CN-PATCHED":true},
-      {"id":"Q13","type":"C","text":"A rectangle is 34 cm wide and 52 cm long. What is its perimeter?",                       "EN-STRONG":false,"CN-WEAK":false,"CN-STRONG":true, "CN-PATCHED":true},
-      {"id":"Q14","type":"C","text":"I earn $3200/month. I save 25% and spend the rest. How much do I spend per year?",       "EN-STRONG":true, "CN-WEAK":false,"CN-STRONG":false,"CN-PATCHED":true},
-      {"id":"Q15","type":"C","text":"A class has 36 students. 1/4 are absent. How many students are present?",                "EN-STRONG":false,"CN-WEAK":false,"CN-STRONG":true, "CN-PATCHED":true},
-      {"id":"Q16","type":"D","text":"A train travels at 87 km/h for 4.5 hours. Total distance?",                              "EN-STRONG":false,"CN-WEAK":false,"CN-STRONG":true, "CN-PATCHED":true},
-      {"id":"Q17","type":"D","text":"A circle has radius 6 cm. What is its area? (use π ≈ 3.14159)",                         "EN-STRONG":false,"CN-WEAK":false,"CN-STRONG":true, "CN-PATCHED":true},
-      {"id":"Q18","type":"D","text":"I invest $5000 at 4% simple interest for 3 years. How much interest do I earn?",         "EN-STRONG":false,"CN-WEAK":false,"CN-STRONG":true, "CN-PATCHED":true},
-      {"id":"Q19","type":"D","text":"Water flows at 2.5 liters/second into a 900-liter tank. How many minutes to fill it?",   "EN-STRONG":false,"CN-WEAK":true, "CN-STRONG":true, "CN-PATCHED":true},
-      {"id":"Q20","type":"D","text":"A car uses 7.5 liters per 100 km. How many liters for a 340 km trip?",                   "EN-STRONG":true, "CN-WEAK":false,"CN-STRONG":true, "CN-PATCHED":false}
+      {
+        "id": "Q01",
+        "type": "A",
+        "text": "What is 347 multiplied by 29?",
+        "EN-STRONG": true,
+        "CN-WEAK": true,
+        "CN-STRONG": true,
+        "CN-PATCHED": true
+      },
+      {
+        "id": "Q02",
+        "type": "A",
+        "text": "Calculate 1024 divided by 32.",
+        "EN-STRONG": true,
+        "CN-WEAK": true,
+        "CN-STRONG": true,
+        "CN-PATCHED": true
+      },
+      {
+        "id": "Q03",
+        "type": "A",
+        "text": "What is 568 plus 437 minus 129?",
+        "EN-STRONG": true,
+        "CN-WEAK": true,
+        "CN-STRONG": true,
+        "CN-PATCHED": true
+      },
+      {
+        "id": "Q04",
+        "type": "A",
+        "text": "Compute 75 squared.",
+        "EN-STRONG": true,
+        "CN-WEAK": true,
+        "CN-STRONG": true,
+        "CN-PATCHED": true
+      },
+      {
+        "id": "Q05",
+        "type": "A",
+        "text": "What is 2 to the power of 10?",
+        "EN-STRONG": true,
+        "CN-WEAK": false,
+        "CN-STRONG": true,
+        "CN-PATCHED": true
+      },
+      {
+        "id": "Q06",
+        "type": "B",
+        "text": "I buy 14 notebooks at $3.50 each. What is the total cost?",
+        "EN-STRONG": true,
+        "CN-WEAK": true,
+        "CN-STRONG": true,
+        "CN-PATCHED": true
+      },
+      {
+        "id": "Q07",
+        "type": "B",
+        "text": "A farmer harvests 860 kg of wheat per hectare over 7 hectares. Total yield?",
+        "EN-STRONG": true,
+        "CN-WEAK": true,
+        "CN-STRONG": true,
+        "CN-PATCHED": true
+      },
+      {
+        "id": "Q08",
+        "type": "B",
+        "text": "A rope is 48.6 meters long and cut into 9 equal pieces. How long is each?",
+        "EN-STRONG": true,
+        "CN-WEAK": false,
+        "CN-STRONG": true,
+        "CN-PATCHED": true
+      },
+      {
+        "id": "Q09",
+        "type": "B",
+        "text": "There are 365 days in a year. How many hours is that?",
+        "EN-STRONG": true,
+        "CN-WEAK": false,
+        "CN-STRONG": true,
+        "CN-PATCHED": true
+      },
+      {
+        "id": "Q10",
+        "type": "B",
+        "text": "A shirt costs $45. It is on sale at 20% off. What is the sale price?",
+        "EN-STRONG": false,
+        "CN-WEAK": false,
+        "CN-STRONG": true,
+        "CN-PATCHED": true
+      },
+      {
+        "id": "Q11",
+        "type": "C",
+        "text": "I have 3 boxes, each containing 128 items. I remove 45 items total. How many remain?",
+        "EN-STRONG": false,
+        "CN-WEAK": false,
+        "CN-STRONG": true,
+        "CN-PATCHED": true
+      },
+      {
+        "id": "Q12",
+        "type": "C",
+        "text": "A store sold 200 units at $15 each. Cost of goods was $1800. What is the profit?",
+        "EN-STRONG": true,
+        "CN-WEAK": false,
+        "CN-STRONG": true,
+        "CN-PATCHED": true
+      },
+      {
+        "id": "Q13",
+        "type": "C",
+        "text": "A rectangle is 34 cm wide and 52 cm long. What is its perimeter?",
+        "EN-STRONG": false,
+        "CN-WEAK": false,
+        "CN-STRONG": true,
+        "CN-PATCHED": true
+      },
+      {
+        "id": "Q14",
+        "type": "C",
+        "text": "I earn $3200/month. I save 25% and spend the rest. How much do I spend per year?",
+        "EN-STRONG": true,
+        "CN-WEAK": false,
+        "CN-STRONG": false,
+        "CN-PATCHED": true
+      },
+      {
+        "id": "Q15",
+        "type": "C",
+        "text": "A class has 36 students. 1/4 are absent. How many students are present?",
+        "EN-STRONG": false,
+        "CN-WEAK": false,
+        "CN-STRONG": true,
+        "CN-PATCHED": true
+      },
+      {
+        "id": "Q16",
+        "type": "D",
+        "text": "A train travels at 87 km/h for 4.5 hours. Total distance?",
+        "EN-STRONG": false,
+        "CN-WEAK": false,
+        "CN-STRONG": true,
+        "CN-PATCHED": true
+      },
+      {
+        "id": "Q17",
+        "type": "D",
+        "text": "A circle has radius 6 cm. What is its area? (use π ≈ 3.14159)",
+        "EN-STRONG": false,
+        "CN-WEAK": false,
+        "CN-STRONG": true,
+        "CN-PATCHED": true
+      },
+      {
+        "id": "Q18",
+        "type": "D",
+        "text": "I invest $5000 at 4% simple interest for 3 years. How much interest do I earn?",
+        "EN-STRONG": false,
+        "CN-WEAK": false,
+        "CN-STRONG": true,
+        "CN-PATCHED": true
+      },
+      {
+        "id": "Q19",
+        "type": "D",
+        "text": "Water flows at 2.5 liters/second into a 900-liter tank. How many minutes to fill it?",
+        "EN-STRONG": false,
+        "CN-WEAK": true,
+        "CN-STRONG": true,
+        "CN-PATCHED": true
+      },
+      {
+        "id": "Q20",
+        "type": "D",
+        "text": "A car uses 7.5 liters per 100 km. How many liters for a 340 km trip?",
+        "EN-STRONG": true,
+        "CN-WEAK": false,
+        "CN-STRONG": true,
+        "CN-PATCHED": false
+      }
     ],
     "summary": {
-      "EN-STRONG": {"total":12,"pct":60,"A":5,"B":4,"C":2,"D":1},
-      "CN-WEAK":   {"total":7, "pct":35,"A":4,"B":2,"C":0,"D":1},
-      "CN-STRONG": {"total":19,"pct":95,"A":5,"B":5,"C":4,"D":5},
-      "CN-PATCHED":{"total":19,"pct":95,"A":5,"B":5,"C":5,"D":4}
+      "EN-STRONG": {
+        "total": 12,
+        "pct": 60,
+        "A": 5,
+        "B": 4,
+        "C": 2,
+        "D": 1
+      },
+      "CN-WEAK": {
+        "total": 7,
+        "pct": 35,
+        "A": 4,
+        "B": 2,
+        "C": 0,
+        "D": 1
+      },
+      "CN-STRONG": {
+        "total": 19,
+        "pct": 95,
+        "A": 5,
+        "B": 5,
+        "C": 4,
+        "D": 5
+      },
+      "CN-PATCHED": {
+        "total": 19,
+        "pct": 95,
+        "A": 5,
+        "B": 5,
+        "C": 5,
+        "D": 4
+      }
     },
     "real_output_examples": [
       {

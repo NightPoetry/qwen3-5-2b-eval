@@ -1,0 +1,23 @@
+{
+  "task": "minified_python",
+  "size": "1k",
+  "text_length": 1056,
+  "ground_truth": [
+    "deserialize_response",
+    "filter_outliers",
+    "invalidate_cache",
+    "merge_branches",
+    "send_alert"
+  ],
+  "conditions": {
+    "A": {
+      "skipped": true
+    },
+    "B": {
+      "skipped": true
+    },
+    "C": {
+      "skipped": true
+    }
+  }
+}

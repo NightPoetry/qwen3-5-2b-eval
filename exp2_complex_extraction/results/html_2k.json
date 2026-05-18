@@ -1,0 +1,50 @@
+{
+  "task": "html_headings",
+  "size": "2k",
+  "text_length": 2459,
+  "ground_truth": [
+    {
+      "level": 1,
+      "text": "License"
+    },
+    {
+      "level": 2,
+      "text": "Usage"
+    },
+    {
+      "level": 3,
+      "text": "Authentication"
+    },
+    {
+      "level": 3,
+      "text": "Appendix"
+    },
+    {
+      "level": 2,
+      "text": "Changelog"
+    },
+    {
+      "level": 3,
+      "text": "Security"
+    },
+    {
+      "level": 3,
+      "text": "Data Model"
+    },
+    {
+      "level": 4,
+      "text": "Troubleshooting"
+    }
+  ],
+  "conditions": {
+    "A": {
+      "skipped": true
+    },
+    "B": {
+      "skipped": true
+    },
+    "C": {
+      "skipped": true
+    }
+  }
+}

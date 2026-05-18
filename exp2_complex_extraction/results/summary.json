@@ -1,0 +1,182 @@
+[
+  {
+    "task": "python_functions",
+    "size": "2k",
+    "text_length": 5535,
+    "ground_truth": [
+      "authorize_request",
+      "cleanup_resources",
+      "deserialize_response",
+      "filter_outliers",
+      "generate_report",
+      "invalidate_cache",
+      "merge_branches",
+      "send_alert"
+    ],
+    "conditions": {
+      "A": {
+        "condition": "A",
+        "found": [
+          "filter_outliers",
+          "send_alert",
+          "deserialize_response",
+          "merge_branches",
+          "invalidate_cache",
+          "generate_report",
+          "cleanup_resources",
+          "authorize_request"
+        ],
+        "rounds": 1,
+        "tool_calls": 0,
+        "elapsed_s": 10.71,
+        "raw_response": "Based on the provided Python source file, here are the top-level functions defined at module scope. These are functions that are not nested within any class (like `DataProcessor` or `EventBus`) and do not define their own classes. They include helper functions like `_inner`, `_reducer`, `_helper`, etc., as well as the main utility functions.\n\nThe list includes:\n1.  `filter_outliers(data, verbose=False)`\n2.  `send_alert(data, config=None)`\n3.  `deserialize_response(data, verbose=False)`\n4.  `merge_branches(data)`\n5.  `invalidate_cache(data)`\n6.  `generate_report(data, config=None)`\n7.  `cleanup_resources(data, verbose=False)`\n8.  `authorize_request(data, verbose=False)`\n\n```json\n[\"filter_outliers\", \"send_alert\", \"deserialize_response\", \"merge_branches\", \"invalidate_cache\", \"generate_report\", \"cleanup_resources\", \"authorize_request\"]\n```",
+        "metrics": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 8,
+          "fp": 0,
+          "fn": 0,
+          "ground_truth_count": 8,
+          "found_count": 8,
+          "missed": [],
+          "spurious": []
+        }
+      }
+    }
+  },
+  {
+    "task": "python_functions",
+    "size": "5k",
+    "text_length": 8034,
+    "ground_truth": [
+      "authenticate",
+      "authorize_request",
+      "cancel_task",
+      "cleanup_resources",
+      "compress_data",
+      "deserialize_response",
+      "filter_outliers",
+      "generate_report",
+      "invalidate_cache",
+      "merge_branches",
+      "send_alert",
+      "serialize_payload"
+    ],
+    "conditions": {
+      "A": {
+        "condition": "A",
+        "found": [
+          "filter_outliers",
+          "send_alert",
+          "deserialize_response",
+          "merge_branches",
+          "invalidate_cache",
+          "generate_report",
+          "rebase_commits",
+          "process_batch",
+          "log_event",
+          "cleanup_resources",
+          "authorize_request",
+          "authenticate",
+          "compress_data",
+          "aggregate_stats",
+          "validate_schema",
+          "transform_matrix",
+          "serialize_payload",
+          "cancel_task"
+        ],
+        "rounds": 1,
+        "tool_calls": 0,
+        "elapsed_s": 17.94,
+        "raw_response": "Based on the provided Python source file, here are the top-level functions defined at module scope. These are functions that are directly accessible from the global namespace without being inside any class or another function definition.\n\nThe following functions appear in the code:\n1.  `filter_outliers` (defined after the initial docstring)\n2.  `send_alert`\n3.  `deserialize_response`\n4.  `merge_branches`\n5.  `invalidate_cache`\n6.  `generate_report`\n7.  `rebase_commits`\n8.  `process_batch`\n9.  `log_event`\n10. `cleanup_resources`\n11. `authorize_request`\n12. `authenticate`\n13. `compress_data`\n14. `aggregate_stats`\n15. `validate_schema`\n16. `transform_matrix`\n17. `serialize_payload`\n18. `cancel_task`\n\nNote: Functions like `__init__`, `restore_backup`, `cache_result`, `extract_features`, and the helper functions `_helper`, `_validator`, `_builder`, `_reducer` are not included because they belong to classes (`DataProcessor`, `EventBus`, `ConfigManager`) or are defined within other functions, respectively.\n\n```json\n[\"filter_outliers\", \"send_alert\", \"deserialize_response\", \"merge_branches\", \"invalidate_cache\", \"generate_report\", \"rebase_commits\", \"process_batch\", \"log_event\", \"cleanup_resources\", \"authorize_request\", \"authenticate\", \"compress_data\", \"aggregate_stats\", \"validate_schema\", \"transform_matrix\", \"serialize_payload\", \"cancel_task\"]\n```",
+        "metrics": {
+          "precision": 0.6667,
+          "recall": 1.0,
+          "f1": 0.8,
+          "tp": 12,
+          "fp": 6,
+          "fn": 0,
+          "ground_truth_count": 12,
+          "found_count": 18,
+          "missed": [],
+          "spurious": [
+            "aggregate_stats",
+            "log_event",
+            "process_batch",
+            "rebase_commits",
+            "transform_matrix",
+            "validate_schema"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "task": "python_functions",
+    "size": "10k",
+    "text_length": 11452,
+    "ground_truth": [
+      "authenticate",
+      "authorize_request",
+      "cache_result",
+      "cancel_task",
+      "cleanup_resources",
+      "compress_data",
+      "deserialize_response",
+      "extract_features",
+      "filter_outliers",
+      "generate_report",
+      "invalidate_cache",
+      "log_event",
+      "merge_branches",
+      "process_batch",
+      "rebase_commits",
+      "restore_backup",
+      "send_alert",
+      "serialize_payload"
+    ],
+    "conditions": {
+      "A": {
+        "condition": "A",
+        "found": [
+          "filter_outliers",
+          "send_alert",
+          "deserialize_response",
+          "merge_branches",
+          "invalidate_cache",
+          "generate_report",
+          "cleanup_resources",
+          "authorize_request",
+          "authenticate",
+          "compress_data",
+          "cache_result",
+          "extract_features",
+          "rebase_commits",
+          "process_batch",
+          "log_event"
+        ],
+        "rounds": 1,
+        "tool_calls": 0,
+        "elapsed_s": 24.63,
+        "raw_response": "Based on the provided Python source file, here are the top-level functions defined at module scope. These are functions that are directly accessible from the global namespace without being inside any class or another function definition.\n\nThe following functions appear in the code:\n1.  `filter_outliers` (defined after the docstring)\n2.  `send_alert` (defined after the first `def filter_outliers`)\n3.  `deserialize_response` (defined after `send_alert`)\n4.  `merge_branches` (defined after `deserialize_response`)\n5.  `invalidate_cache` (defined after `merge_branches`)\n6.  `generate_report` (defined after `invalidate_cache`)\n7.  `cleanup_resources` (defined after `generate_report`)\n8.  `authorize_request` (defined after `cleanup_resources`)\n9.  `authenticate` (defined after `authorize_request`)\n10. `compress_data` (defined after `authenticate`)\n11. `cache_result` (defined after `compress_data`)\n12. `extract_features` (defined after `cache_result`)\n13. `rebase_commits` (defined after `extract_features`)\n14. `process_batch` (defined after `rebase_commits`)\n15. `log_event` (defined after `process_batch`)\n\nNote: The functions defined inside classes like `DataProcessor`, `EventBus`, `ConfigManager`, and `RequestHandler` are excluded because they are not top-level module functions; they belong to their respective class scopes. Additionally, the helper functions `_resolver`, `_validator`, `_callback`, `_helper`, `_transformer`, and `_transformer` (repeated) defined within these classes are also excluded as per the instruction to list only top-level function names.\n\n```json\n[\"filter_outliers\", \"send_alert\", \"deserialize_response\", \"merge_branches\", \"invalidate_cache\", \"generate_report\", \"cleanup_resources\", \"authorize_request\", \"authenticate\", \"compress_data\", \"cache_result\", \"extract_features\", \"rebase_commits\", \"process_batch\", \"log_event\"]\n```",
+        "metrics": {
+          "precision": 1.0,
+          "recall": 0.8333,
+          "f1": 0.9091,
+          "tp": 15,
+          "fp": 0,
+          "fn": 3,
+          "ground_truth_count": 18,
+          "found_count": 15,
+          "missed": [
+            "cancel_task",
+            "restore_backup",
+            "serialize_payload"
+          ],
+          "spurious": []
+        }
+      }
+    }
+  }
+]

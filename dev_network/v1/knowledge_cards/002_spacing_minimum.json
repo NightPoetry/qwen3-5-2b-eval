@@ -1,0 +1,42 @@
+{
+  "id": "002",
+  "name": "间距最小标准",
+  "source": "UI设计/呼吸留白",
+  "phase": "css_validation",
+  "trigger": {
+    "type": "regex",
+    "pattern": "(?:padding|margin|gap):\\s*(\\d+)px",
+    "description": "CSS中间距数值小于6px"
+  },
+  "steps": [
+    {
+      "actor": "system",
+      "action": "regex_find_all",
+      "input": "CSS文件内容",
+      "output": "所有间距声明及其数值"
+    },
+    {
+      "actor": "system",
+      "action": "check_value",
+      "input": "间距数值",
+      "output": "是否 < 6px",
+      "threshold": 6
+    },
+    {
+      "actor": "system",
+      "action": "replace",
+      "input": "低于阈值的间距",
+      "output": "替换为8px（最小安全值）",
+      "condition": "value < 6 and not padding:0（有意为之）"
+    }
+  ],
+  "reference": {
+    "section_padding": "12px 14px",
+    "row_gap": "8px",
+    "control_gap": "8px",
+    "panel_margin": "14px",
+    "sweet_spot": "8-14px"
+  },
+  "model_involvement": "none",
+  "deterministic": true
+}

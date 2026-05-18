@@ -1,0 +1,36 @@
+{
+  "task": "minified_python",
+  "size": "4k",
+  "text_length": 4009,
+  "ground_truth": [
+    "authenticate",
+    "authorize_request",
+    "cache_result",
+    "cancel_task",
+    "cleanup_resources",
+    "compress_data",
+    "deserialize_response",
+    "extract_features",
+    "filter_outliers",
+    "generate_report",
+    "invalidate_cache",
+    "log_event",
+    "merge_branches",
+    "process_batch",
+    "rebase_commits",
+    "restore_backup",
+    "send_alert",
+    "serialize_payload"
+  ],
+  "conditions": {
+    "A": {
+      "skipped": true
+    },
+    "B": {
+      "skipped": true
+    },
+    "C": {
+      "skipped": true
+    }
+  }
+}

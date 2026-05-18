@@ -1,0 +1,27 @@
+{
+  "id": "008",
+  "name": "localStorage安全模式",
+  "source": "knowledge/web-frontend-embedded",
+  "phase": "js_generation",
+  "trigger": {
+    "type": "keyword",
+    "keywords": ["localStorage", "存储", "持久化"],
+    "description": "契约中涉及localStorage时自动应用"
+  },
+  "steps": [
+    {
+      "actor": "system",
+      "action": "template_inject",
+      "input": "契约中的storage_key和data_format",
+      "output": "标准loadData/saveData模板",
+      "template": "function loadData() {\n  try {\n    const raw = localStorage.getItem('{key}');\n    return raw ? JSON.parse(raw) : {default};\n  } catch(e) {\n    return {default};\n  }\n}\nfunction saveData(data) {\n  localStorage.setItem('{key}', JSON.stringify(data));\n}"
+    }
+  ],
+  "rules": [
+    "JSON.parse必须try-catch（用户可能手动修改localStorage）",
+    "默认值必须是有效的空状态（如[]）",
+    "key名由系统从契约分配，不让模型生成"
+  ],
+  "model_involvement": "none",
+  "deterministic": true
+}

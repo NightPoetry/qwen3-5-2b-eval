@@ -19,5 +19,14 @@ Thumbs.db
 .env
 .env.*
 
-# AI assistant local notice
+# AI assistant
 AI_NOTICE.md
+.claude/
+
+# Runtime data (chat logs, sessions, output artifacts)
+dev_network/v2/chat_logs/
+dev_network/v2/output/
+dev_network/v2/.session.json
+
+# v1 legacy output artifacts
+dev_network/outputs/
