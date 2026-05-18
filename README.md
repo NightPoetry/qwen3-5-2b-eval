@@ -42,15 +42,15 @@ export LLM_API_URL="http://<IP>:1234/v1/chat/completions"
 
 ```
 ├── README.md
-├── report/                           — 能力评估可视化报告
-│   ├── index.html                    — HTML 报告主页
-│   └── data/                         — 实验原始数据
+├── LICENSE
 │
-├── needle_in_haystack.py             — 实验一：大海捞针（长上下文检索）
-├── reasoning_retrieval.py            — 实验二：推理检索
-├── advanced_test.py                  — 实验三A：复杂推理
-├── function_call_loop.py             — 实验三B：Function Calling 闭环
-├── tool_description_test.py          — 实验四：工具描述质量对比
+├── exp1_capability_eval/             — 实验一~四：基础能力评估
+│   ├── needle_in_haystack.py         — 大海捞针（长上下文检索）
+│   ├── reasoning_retrieval.py        — 推理检索
+│   ├── advanced_test.py              — 复杂推理
+│   ├── function_call_loop.py         — Function Calling 闭环
+│   ├── tool_description_test.py      — 工具描述质量对比
+│   └── report/                       — 可视化报告 + 原始数据
 │
 ├── exp2_complex_extraction/          — 实验五：复杂信息提取（工具增强）
 │   ├── runner.py                     — 27-case 批量测试器
@@ -59,31 +59,14 @@ export LLM_API_URL="http://<IP>:1234/v1/chat/completions"
 ├── exp3_27b/                         — 实验六：27B 模型对比（已暂停）
 │
 └── dev_network/                      — 可执行知识网络
-    ├── v1/                           — v1 原型（三层有环图，已归档）
-    ├── v2/                           — v2 正式版（栈展开引擎 + 164 节点）
-    │   ├── engine.py                 — 执行引擎（~200行，栈展开+触发检查+光标续入）
-    │   ├── llm.py                    — LLM 调用工具（隔离对话，2B 单线程原则）
+    ├── v1/                           — v1 原型（已归档）
+    ├── v2/                           — v2 正式版
+    │   ├── engine.py                 — 执行引擎（栈展开 + 三级光标续入）
+    │   ├── llm.py                    — LLM 调用（隔离对话，环境变量配置）
     │   ├── nodes/                    — 164 个可执行节点
-    │   │   ├── 000_universal_entry   — 万能入口
-    │   │   ├── 010-090               — 核心生成管线（交互设计→代码生成→验证）
-    │   │   ├── 100-250               — 质量精炼层（样式/交互/布局检查）
-    │   │   ├── 300-399               — 推理与认知（结构主义推理/词义消歧/事实校准）
-    │   │   ├── 400-499               — 安全与监控（风险分级/不可逆检测/看门狗）
-    │   │   ├── 500-599               — 元方法论（超参消除/自举学习/交互调试）
-    │   │   ├── 600-699               — 开发方法论与平台（Fix/Develop模式/双轨思考）
-    │   │   ├── 700-799               — 技能节点（蒸馏/翻译/UI设计/跨平台打包）
-    │   │   ├── 800-899               — 对话节点（闲聊/情感/记忆检索）
-    │   │   ├── 900-999               — 角色与理论（7种角色/设计模式/通用原则）
-    │   │   ├── A00-D00               — 域路由（对话/工程/推理/创作四个域）
-    │   │   ├── E00-E33               — 扩展领域（游戏/视频编辑/工作流/AI工具）
-    │   │   └── Y10-Y40               — 输出锚点（对话/代码/分析/创作）
-    │   ├── web/                      — Web 界面
-    │   │   ├── app.py                — Flask 后端（会话管理/光标续入）
-    │   │   ├── graph.html            — 3D 知识图谱可视化（Three.js）
-    │   │   └── index.html            — 聊天界面
-    │   ├── scripts/                   — 测试与运行脚本
-    │   └── _archive/                 — 历史备份（blog节点/v1节点/模板）
-    ├── v1/                           — v1 原型（三层有环图、知识卡片、输出样例）
+    │   ├── web/                      — Flask 后端 + Three.js 3D 可视化
+    │   ├── scripts/                  — 测试与运行脚本
+    │   └── _archive/                 — 历史备份
     └── 交接文档/                      — 开发过程记录
 ```
 
@@ -145,6 +128,7 @@ export LLM_API_URL="http://<IP>:1234/v1/chat/completions"
 ### 能力评估实验（实验一~四）
 
 ```bash
+cd exp1_capability_eval
 python needle_in_haystack.py
 python reasoning_retrieval.py
 python advanced_test.py
